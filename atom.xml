@@ -88,13 +88,13 @@
     
     <category term="StarNote" scheme="https://twinklestar03.com/tags/StarNote/"/>
     
+    <category term="Algorithm" scheme="https://twinklestar03.com/tags/Algorithm/"/>
+    
     <category term="Levenshtein distance" scheme="https://twinklestar03.com/tags/Levenshtein-distance/"/>
     
     <category term="Edit Distance" scheme="https://twinklestar03.com/tags/Edit-Distance/"/>
     
     <category term="Fuzzy" scheme="https://twinklestar03.com/tags/Fuzzy/"/>
-    
-    <category term="Algorithm" scheme="https://twinklestar03.com/tags/Algorithm/"/>
     
   </entry>
   
@@ -165,8 +165,6 @@
     <category term="Notes" scheme="https://twinklestar03.com/categories/Notes/"/>
     
     
-    <category term="Stack" scheme="https://twinklestar03.com/tags/Stack/"/>
-    
     <category term="StarNote" scheme="https://twinklestar03.com/tags/StarNote/"/>
     
     <category term="Algorithm" scheme="https://twinklestar03.com/tags/Algorithm/"/>
@@ -174,6 +172,8 @@
     <category term="MonotoneStack" scheme="https://twinklestar03.com/tags/MonotoneStack/"/>
     
     <category term="MonotoneQueue" scheme="https://twinklestar03.com/tags/MonotoneQueue/"/>
+    
+    <category term="Stack" scheme="https://twinklestar03.com/tags/Stack/"/>
     
     <category term="Queue" scheme="https://twinklestar03.com/tags/Queue/"/>
     
@@ -198,11 +198,11 @@
     
     <category term="StarNote" scheme="https://twinklestar03.com/tags/StarNote/"/>
     
-    <category term="Algorithm" scheme="https://twinklestar03.com/tags/Algorithm/"/>
-    
     <category term="DynamicProgramming" scheme="https://twinklestar03.com/tags/DynamicProgramming/"/>
     
     <category term="DP" scheme="https://twinklestar03.com/tags/DP/"/>
+    
+    <category term="Algorithm" scheme="https://twinklestar03.com/tags/Algorithm/"/>
     
   </entry>
   
@@ -225,9 +225,9 @@
     <category term="UVa" scheme="https://twinklestar03.com/categories/Contest/UVa/"/>
     
     
-    <category term="UVa514" scheme="https://twinklestar03.com/tags/UVa514/"/>
-    
     <category term="Stack" scheme="https://twinklestar03.com/tags/Stack/"/>
+    
+    <category term="UVa514" scheme="https://twinklestar03.com/tags/UVa514/"/>
     
   </entry>
   
