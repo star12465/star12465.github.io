@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-sena16x16.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-sena32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-sena16x16.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"twinklestar03.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"right","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="學習筆記-Levenshtein distance(Edit Distance) 不知不覺快一個月沒更新部落格了Σ( ° △ °)，太多事情要忙了阿~~~~雖然之前學過了但是因緣際會下又碰到了，所以寫個文章複習一下(๑´ڡ&#96;๑)">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Algorithm::Levenshtein distance(Edit Distance)">
+<meta property="og:url" content="https://twinklestar03.com/Notes/Algorithm-EditDistance/index.html">
+<meta property="og:site_name" content="Star Note">
+<meta property="og:description" content="學習筆記-Levenshtein distance(Edit Distance) 不知不覺快一個月沒更新部落格了Σ( ° △ °)，太多事情要忙了阿~~~~雖然之前學過了但是因緣際會下又碰到了，所以寫個文章複習一下(๑´ڡ&#96;๑)">
+<meta property="og:locale" content="zh_TW">
+<meta property="article:published_time" content="2019-08-23T16:00:00.000Z">
+<meta property="article:modified_time" content="2020-07-02T16:08:02.959Z">
+<meta property="article:author" content="TwinkleStar03">
+<meta property="article:tag" content="StarNote">
+<meta property="article:tag" content="Levenshtein distance">
+<meta property="article:tag" content="Edit Distance">
+<meta property="article:tag" content="Fuzzy">
+<meta property="article:tag" content="Algorithm">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://twinklestar03.com/Notes/Algorithm-EditDistance/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-TW'
+  };
+</script>
+
+  <title>Algorithm::Levenshtein distance(Edit Distance) | Star Note</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-142199198-1"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-142199198-1');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="Star Note" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切換導航欄">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Star Note</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">星筆記</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首頁</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>關於</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分類</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>歸檔</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-TW">
+    <link itemprop="mainEntityOfPage" href="https://twinklestar03.com/Notes/Algorithm-EditDistance/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar_sena.png">
+      <meta itemprop="name" content="TwinkleStar03">
+      <meta itemprop="description" content="日常的學習紀錄d(`･∀･)b<br><br>Pwning my world٩(ŏ﹏ŏ、)۶<br>New CTFer.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Star Note">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Algorithm::Levenshtein distance(Edit Distance)
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">發表於</span>
+
+              <time title="創建時間：2019-08-24 00:00:00" itemprop="dateCreated datePublished" datetime="2019-08-24T00:00:00+08:00">2019-08-24</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新於</span>
+                <time title="修改時間：2020-07-03 00:08:02" itemprop="dateModified" datetime="2020-07-03T00:08:02+08:00">2020-07-03</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分類於</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Notes/" itemprop="url" rel="index"><span itemprop="name">Notes</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>學習筆記-<strong>Levenshtein distance(Edit Distance)</strong></p>
+<p>不知不覺快一個月沒更新部落格了Σ( ° △ °)，太多事情要忙了阿~~~~<br>雖然之前學過了但是因緣際會下又碰到了，所以寫個文章複習一下(๑´ڡ`๑)</p>
+<a id="more"></a>
+
+<hr>
+<h1 id="介紹"><a href="#介紹" class="headerlink" title="介紹"></a>介紹</h1><p>Levenshtein distance(Edit Distance)，可以稱為編輯距離，編輯距離可以用來比較兩個字串並求出相似度，所以可以用來做到模糊搜尋。</p>
+<p>Edit Distance是這樣來比較兩個字串的，假設我有兩個字串A, B。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">A &#x3D; &#39;AFEDC&#39;</span><br><span class="line">B &#x3D; &#39;ABDECG&#39;</span><br></pre></td></tr></table></figure>
+<p>編輯距離可以想成我要把A變成B需要花幾<strong>步驟</strong>來完成，圍繞在以下3種動作:</p>
+<ul>
+<li><strong>Insert插入</strong>，插入一個字元</li>
+<li><strong>Delete刪除</strong>，刪除一個字元</li>
+<li><strong>Replace替換</strong>，替換一個字元</li>
+</ul>
+<p>作法是這樣的，開始逐一比較字元並修改，得出A變成B需要的步驟數。</p>
+<p>箭頭代表字元指針</p>
+<figure class="highlight m"><figcaption><span>模擬過程</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line">移動指針</span><br><span class="line">    ↓</span><br><span class="line">A <span class="built_in">=</span> AFEDC</span><br><span class="line">B <span class="built_in">=</span> ABDECG</span><br><span class="line">    ↑</span><br><span class="line">A[<span class="number">0</span>] <span class="built_in">=</span><span class="built_in">=</span> B[<span class="number">0</span>]，此時的cost <span class="built_in">=</span> <span class="number">0</span></span><br><span class="line"></span><br><span class="line">移動指針</span><br><span class="line">     ↓</span><br><span class="line">A <span class="built_in">=</span> AFEDC</span><br><span class="line">B <span class="built_in">=</span> ABDECG</span><br><span class="line">     ↑</span><br><span class="line">A[<span class="number">1</span>] !<span class="built_in">=</span> B[<span class="number">1</span>]，我們可以把F換成B，此時的cost + <span class="number">1</span> <span class="built_in">=</span> <span class="number">1</span></span><br><span class="line"></span><br><span class="line">移動指針</span><br><span class="line">      ↓</span><br><span class="line">A <span class="built_in">=</span> AFEDC</span><br><span class="line">B <span class="built_in">=</span> ABDECG</span><br><span class="line">      ↑</span><br><span class="line">A[<span class="number">2</span>] !<span class="built_in">=</span> B[<span class="number">2</span>]，我們可以把E換成D，此時的cost + <span class="number">1</span> <span class="built_in">=</span> <span class="number">2</span></span><br><span class="line"></span><br><span class="line">省略部分...</span><br><span class="line"></span><br><span class="line">移動指針</span><br><span class="line">        ↓</span><br><span class="line">A <span class="built_in">=</span> AFEDC</span><br><span class="line">B <span class="built_in">=</span> ABDECG</span><br><span class="line">        ↑</span><br><span class="line">A[<span class="number">4</span>] <span class="built_in">=</span><span class="built_in">=</span> B[<span class="number">4</span>]，不用修改，此時cost <span class="built_in">=</span> <span class="number">3</span></span><br><span class="line"></span><br><span class="line">移動指針</span><br><span class="line">         ↓</span><br><span class="line">A <span class="built_in">=</span> AFEDC</span><br><span class="line">B <span class="built_in">=</span> ABDECG</span><br><span class="line">         ↑</span><br><span class="line">A[<span class="number">5</span>] <span class="built_in">=</span><span class="built_in">=</span> B[<span class="number">5</span>]，A缺少一個字元，所以我們插入一個G，此時cost + <span class="number">1</span> <span class="built_in">=</span> <span class="number">4</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">把A變成B的cost是<span class="number">4</span>，所以EditDistance(A, B) <span class="built_in">=</span> <span class="number">4</span></span><br></pre></td></tr></table></figure>
+<p>如果當字串長度不一樣的時候就會出現需要刪除或是插入的動作，如果都是B &gt; A就只會出現插入不會有刪除，如果B &lt; A反之。</p>
+<hr>
+<h1 id="實作"><a href="#實作" class="headerlink" title="實作"></a>實作</h1><p>知道原理之後就來產Code吧!</p>
+<figure class="highlight c"><figcaption><span>Recursion</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">EditDistance</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *s, <span class="keyword">int</span> len_s, <span class="keyword">const</span> <span class="keyword">char</span> *t, <span class="keyword">int</span> <span class="keyword">len_t</span>)</span></span>&#123; </span><br><span class="line">  <span class="keyword">int</span> cost;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/* 終止條件，當兩字串都為空 */</span></span><br><span class="line">  <span class="keyword">if</span> (len_s == <span class="number">0</span>) <span class="keyword">return</span> <span class="keyword">len_t</span>;</span><br><span class="line">  <span class="keyword">if</span> (<span class="keyword">len_t</span> == <span class="number">0</span>) <span class="keyword">return</span> len_s;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/* 檢查字元是否一樣，不一樣的話cost = 1 */</span></span><br><span class="line">  <span class="keyword">if</span> (s[len_s<span class="number">-1</span>] == t[<span class="keyword">len_t</span><span class="number">-1</span>])</span><br><span class="line">      cost = <span class="number">0</span>;</span><br><span class="line">  <span class="keyword">else</span></span><br><span class="line">      cost = <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/* return 最小編輯次數(刪除, 插入, 替換)*/</span></span><br><span class="line">  <span class="keyword">return</span> <span class="built_in">std</span>::min(EditDistance(s, len_s - <span class="number">1</span>, t, <span class="keyword">len_t</span>    ) + <span class="number">1</span>,</span><br><span class="line">                 EditDistance(s, len_s    , t, <span class="keyword">len_t</span> - <span class="number">1</span>) + <span class="number">1</span>,</span><br><span class="line">                 EditDistance(s, len_s - <span class="number">1</span>, t, <span class="keyword">len_t</span> - <span class="number">1</span>) + cost);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>這裡有個比較特別的小地方，EditDistance(s, <strong>len_s + 1</strong>, t, len_t) 代表的是插入一個字元，但是這行其實不對，因為他不會終止遞迴，在這邊len_s + 1是改變後的字串(未來)，可是程式判斷的時候是以送進來的字串為主(過去)。</p>
+<p>在這裡可以透過一個方法把len_s + 1 改成 len_t - 1，在這裡可以花一點時間思考為什麼。</p>
+<p>其實原因是插入代表我把一個原字串沒有的字元加進字串(len_s + 1)，相當於我跟相比較的字串少了一個不相同的地方(len_t - 1)，所以其實這兩者是表達一樣的東西。</p>
+<p>這個演算法還可以透過Dynamic Programming來完成，改天再補上Code吧~</p>
+
+    </div>
+
+    
+    
+    
+        
+
+  <div class="followme">
+    <p>歡迎關注我的其它發布渠道</p>
+
+    <div class="social-list">
+
+        <div class="social-item">
+          <a target="_blank" class="social-link" href="/atom.xml">
+            <span class="icon">
+              <i class="fa fa-rss"></i>
+            </span>
+
+            <span class="label">RSS</span>
+          </a>
+        </div>
+    </div>
+  </div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/StarNote/" rel="tag"># StarNote</a>
+              <a href="/tags/Levenshtein-distance/" rel="tag"># Levenshtein distance</a>
+              <a href="/tags/Edit-Distance/" rel="tag"># Edit Distance</a>
+              <a href="/tags/Fuzzy/" rel="tag"># Fuzzy</a>
+              <a href="/tags/Algorithm/" rel="tag"># Algorithm</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/Contest/CTF/Bamboofox-CTF/" rel="prev" title="Bamboofox-CTF解題紀錄">
+      <i class="fa fa-chevron-left"></i> Bamboofox-CTF解題紀錄
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/Contest/CTF/MooncakeCTF/" rel="next" title="PHP字元的神奇運用">
+      PHP字元的神奇運用 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目錄
+        </li>
+        <li class="sidebar-nav-overview">
+          本站概要
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BB%8B%E7%B4%B9"><span class="nav-number">1.</span> <span class="nav-text">介紹</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AF%A6%E4%BD%9C"><span class="nav-number">2.</span> <span class="nav-text">實作</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TwinkleStar03"
+      src="/images/avatar_sena.png">
+  <p class="site-author-name" itemprop="name">TwinkleStar03</p>
+  <div class="site-description" itemprop="description">日常的學習紀錄d(`･∀･)b<br><br>Pwning my world٩(ŏ﹏ŏ、)۶<br>New CTFer.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">12</span>
+          <span class="site-state-item-name">文章</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分類</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">26</span>
+        <span class="site-state-item-name">標籤</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="mailto:star@twinklestar03.com" title="E-mail → mailto:star@twinklestar03.com"><i class="fa fa-envelope fa-fw"></i>E-mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TwinkleStar03</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
