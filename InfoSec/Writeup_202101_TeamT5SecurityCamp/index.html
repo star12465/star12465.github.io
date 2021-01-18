@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-sena16x16.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-sena32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-sena16x16.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto, Noto Sans TC, Noto Sans:300,300italic,400,400italic,700,700italic|Noto Sans TC, Noto Sans:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"twinklestar03.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"right","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="新的一年，自己的網誌也該來更新一下了!除了把Hexo升級跟把網誌變成Dark mode外，怎麼能夠少了新文章呢? 2021是我進入資安領域的第二年，然後發現了TeamT5辦了一個SecurityCamp。想要學習新東西所以報名參加，發現參加前還要先做樣本分析…真的有夠硬核XD 這篇文章就是我在分析過程的二三事。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Writeup::TeamT5資安研習營 - 實作題目分析">
+<meta property="og:url" content="https://twinklestar03.com/InfoSec/Writeup_202101_TeamT5SecurityCamp/index.html">
+<meta property="og:site_name" content="Star&#39;s Note">
+<meta property="og:description" content="新的一年，自己的網誌也該來更新一下了!除了把Hexo升級跟把網誌變成Dark mode外，怎麼能夠少了新文章呢? 2021是我進入資安領域的第二年，然後發現了TeamT5辦了一個SecurityCamp。想要學習新東西所以報名參加，發現參加前還要先做樣本分析…真的有夠硬核XD 這篇文章就是我在分析過程的二三事。">
+<meta property="og:locale" content="zh_TW">
+<meta property="article:published_time" content="2021-01-09T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-01-18T16:39:59.649Z">
+<meta property="article:author" content="TwinkleStar03">
+<meta property="article:tag" content="Writeup">
+<meta property="article:tag" content="TeamT5 SecurityCamp">
+<meta property="article:tag" content="MalwareAnalysis">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://twinklestar03.com/InfoSec/Writeup_202101_TeamT5SecurityCamp/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-TW'
+  };
+</script>
+
+  <title>Writeup::TeamT5資安研習營 - 實作題目分析 | Star's Note</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-142199198-1"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-142199198-1');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="Star's Note" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切換導航欄">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Star's Note</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">星筆記</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首頁</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>關於</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分類</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>歸檔</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-TW">
+    <link itemprop="mainEntityOfPage" href="https://twinklestar03.com/InfoSec/Writeup_202101_TeamT5SecurityCamp/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar_sena.png">
+      <meta itemprop="name" content="TwinkleStar03">
+      <meta itemprop="description" content="ヾ(≧▽≦*)o Pwning my world<br>InfoSec // CTFer // Robotics<br>">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Star's Note">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Writeup::TeamT5資安研習營 - 實作題目分析
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">發表於</span>
+
+              <time title="創建時間：2021-01-10 00:00:00" itemprop="dateCreated datePublished" datetime="2021-01-10T00:00:00+08:00">2021-01-10</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新於</span>
+                <time title="修改時間：2021-01-19 00:39:59" itemprop="dateModified" datetime="2021-01-19T00:39:59+08:00">2021-01-19</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分類於</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/InfoSec/" itemprop="url" rel="index"><span itemprop="name">InfoSec</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>新的一年，自己的網誌也該來更新一下了!<br>除了把Hexo升級跟把網誌變成Dark mode外，怎麼能夠少了新文章呢?</p>
+<p>2021是我進入資安領域的第二年，然後發現了TeamT5辦了一個SecurityCamp。<br>想要學習新東西所以報名參加，發現參加前還要先做樣本分析…真的有夠硬核XD</p>
+<p>這篇文章就是我在分析過程的二三事。</p>
+<a id="more"></a>
+
+<hr>
+<h2 id="Recon"><a href="#Recon" class="headerlink" title="Recon"></a>Recon</h2><p>把樣本塞進IDA後發現這隻檔案有被加殼，加上的是UPX的殼。</p>
+<p>丟進PEStudio可以知道這是一隻DLL檔案，等等後續可能會用到Loader來協助自己分析。<br><img src="'/images/TeamT5SecurityCamp/recon_pestudio.png'"></p>
+<h2 id="手動脫殼的二三事"><a href="#手動脫殼的二三事" class="headerlink" title="手動脫殼的二三事"></a>手動脫殼的二三事</h2><p>因為沒甚麼接觸過樣本分析，所以我想要從手動脫殼來開始練習，所以就不使用 <code>upx -d</code> 了。</p>
+<p>這邊用的是x32dbg，用rundll32載入DLL再踩上DLL自己的EP。<br><img src="'/images/TeamT5SecurityCamp/unpacking_rundll32.png'"></p>
+<p>運用Unpack時會改動ESP的特性，在對ESP操作的instruction下斷點。<br>Continue 後我發現了這個地方。<br><img src="'/images/TeamT5SecurityCamp/unpacking_cleaning_stack.png'"></p>
+<p>不斷的往Stack中放 <code>0</code>，之後接著跳去一個很遠的地方，我認為那邊就是這隻DLL的OEP了。</p>
+<p>前往目標位置然後用Scylla把Unpacked的DLL dump出來，然後用Scylla來Fix IAT 跟 Import table，之後就可以來繼續分析了。</p>
+<p>只不過抓Import Table似乎出了點問題…<br><img src="'/images/TeamT5SecurityCamp/unpacking_import_table.png'"></p>
+<p>我後續比對自己手脫跟 <code>upx -d</code> 脫出來的檔案，發現會有function數量上的差異。<br>而且消失的function不在連續記憶體上，所以排除了dump整個爛掉的可能，猜測就是這個環節出了問題。<br><img src="'/images/TeamT5SecurityCamp/unpacking_missing_function.png'"></p>
+<blockquote>
+<p>後續檢查發現，少掉的function大多都是IDA沒有解析出來，但他還是存在於檔案中的<br>是一些長的像jump table結構的東西。<br><img src="'/images/TeamT5SecurityCamp/unpacking_missing_function_2.png'"><br>所以我後續分析還是用UPX脫出來的為準。</p>
+</blockquote>
+<h2 id="行為分析"><a href="#行為分析" class="headerlink" title="行為分析"></a>行為分析</h2><p>我這邊透過Process Montior與Wireshark來記錄，在透過rundll32去跑這隻DLL的RegisterServer函數。</p>
+<h3 id="生成常駐檔案"><a href="#生成常駐檔案" class="headerlink" title="生成常駐檔案"></a>生成常駐檔案</h3><p>樣本會先CreateFile，<code>C:\ProgramData\Software\Microsoft\Windows\Defender\AutoUpdate.dll</code>，之後使用regsvr32去註冊這隻DLL成為DLL Server。</p>
+<p>此外我在尋找AutoRun的時候找到了這個，也能證明這一個DLL是生出來的檔案並常駐於系統。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">key: HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\RunOnce</span><br><span class="line">name: WindowsDefender</span><br><span class="line">operation: write</span><br><span class="line">typeValue: REG_SZ</span><br><span class="line">value: regsvr32.exe &#x2F;s &quot;C:\ProgramData\Software\Microsoft\Windows\Defender\AutoUpdate.dll&quot;</span><br></pre></td></tr></table></figure>
+<p>而這個AutoUpdate.dll一樣有加殼，也是UPX的殼，然後run起來行為差不多(#</p>
+<h3 id="移除初始檔案"><a href="#移除初始檔案" class="headerlink" title="移除初始檔案"></a>移除初始檔案</h3><p>從ProcessMonitor中，可以看到樣本會先生成一個Patch檔，並放在 <code>C:\ProgramData\temp\[A-Za-z0-9]&#123;4&#125;.tmp.bat</code>。之後會呼叫cmd去執行這個Batch file來達成移除初始檔案。</p>
+<p><img src="'/images/TeamT5SecurityCamp/behavior_spawn_batch.png'"></p>
+<p>Batch File:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">:repeat</span><br><span class="line">    del &quot;C:\Users\tim12\Desktop\TeamT5_Analysis\Unpacking\b6eeed4fd8eb48126ffb216fd392ae74.dll&quot;</span><br><span class="line">    if exist &quot;C:\Users\tim12\Desktop\TeamT5_Analysis\Unpacking\b6eeed4fd8eb48126ffb216fd392ae74.dll&quot; goto repeat</span><br><span class="line">    del &quot;%~f0&quot;</span><br></pre></td></tr></table></figure>
+<h3 id="DNS-Request"><a href="#DNS-Request" class="headerlink" title="DNS Request"></a>DNS Request</h3><p>樣本跑起來之後，我在Wireshark錄到了一個DNS Request，看起來是要解析C2 Server的位置。</p>
+<p>不過這邊卻長得像一個忘記改掉的Placeholder，蠻有趣的w</p>
+<p><img src="'/images/TeamT5SecurityCamp/behavior_dns_request.png'"></p>
+
+    </div>
+
+    
+    
+    
+        
+
+  <div class="followme">
+    <p>喜歡這些內容嗎? 歡迎訂閱我的部落格!</p>
+
+    <div class="social-list">
+
+        <div class="social-item">
+          <a target="_blank" class="social-link" href="/atom.xml">
+            <span class="icon">
+              <i class="fa fa-rss"></i>
+            </span>
+
+            <span class="label">RSS</span>
+          </a>
+        </div>
+    </div>
+  </div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Writeup/" rel="tag"># Writeup</a>
+              <a href="/tags/TeamT5-SecurityCamp/" rel="tag"># TeamT5 SecurityCamp</a>
+              <a href="/tags/MalwareAnalysis/" rel="tag"># MalwareAnalysis</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/InfoSec/Writeup_202006_AIS3PreExam20/" rel="prev" title="Writeup::AIS3_2020_PreExam">
+      <i class="fa fa-chevron-left"></i> Writeup::AIS3_2020_PreExam
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目錄
+        </li>
+        <li class="sidebar-nav-overview">
+          本站概要
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Recon"><span class="nav-number">1.</span> <span class="nav-text">Recon</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%89%8B%E5%8B%95%E8%84%AB%E6%AE%BC%E7%9A%84%E4%BA%8C%E4%B8%89%E4%BA%8B"><span class="nav-number">2.</span> <span class="nav-text">手動脫殼的二三事</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A1%8C%E7%82%BA%E5%88%86%E6%9E%90"><span class="nav-number">3.</span> <span class="nav-text">行為分析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%94%9F%E6%88%90%E5%B8%B8%E9%A7%90%E6%AA%94%E6%A1%88"><span class="nav-number">3.1.</span> <span class="nav-text">生成常駐檔案</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A7%BB%E9%99%A4%E5%88%9D%E5%A7%8B%E6%AA%94%E6%A1%88"><span class="nav-number">3.2.</span> <span class="nav-text">移除初始檔案</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#DNS-Request"><span class="nav-number">3.3.</span> <span class="nav-text">DNS Request</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TwinkleStar03"
+      src="/images/avatar_sena.png">
+  <p class="site-author-name" itemprop="name">TwinkleStar03</p>
+  <div class="site-description" itemprop="description">ヾ(≧▽≦*)o Pwning my world<br>InfoSec // CTFer // Robotics<br></div>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:star@twinklestar03.com" title="E-mail → mailto:star@twinklestar03.com"><i class="fa fa-envelope fa-fw"></i>E-mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.facebook.com/star12465/" title="Facebook → https:&#x2F;&#x2F;www.facebook.com&#x2F;star12465&#x2F;" rel="noopener" target="_blank"><i class="fab fa-facebook fa-fw"></i>Facebook</a>
+      </span>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TwinkleStar03</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

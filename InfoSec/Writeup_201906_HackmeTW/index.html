@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-sena16x16.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-sena32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-sena16x16.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto, Noto Sans TC, Noto Sans:300,300italic,400,400italic,700,700italic|Noto Sans TC, Noto Sans:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"twinklestar03.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"right","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="為了練習CTF相關知識，所以到了這個網站上來玩，會慢慢的更新解題思路讓自己有點回饋~">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Writeup::HackmeTw">
+<meta property="og:url" content="https://twinklestar03.com/InfoSec/Writeup_201906_HackmeTW/index.html">
+<meta property="og:site_name" content="Star&#39;s Note">
+<meta property="og:description" content="為了練習CTF相關知識，所以到了這個網站上來玩，會慢慢的更新解題思路讓自己有點回饋~">
+<meta property="og:locale" content="zh_TW">
+<meta property="article:published_time" content="2019-06-23T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-01-18T16:31:26.615Z">
+<meta property="article:author" content="TwinkleStar03">
+<meta property="article:tag" content="CTF">
+<meta property="article:tag" content="Hackme.tw">
+<meta property="article:tag" content="Writeup">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://twinklestar03.com/InfoSec/Writeup_201906_HackmeTW/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-TW'
+  };
+</script>
+
+  <title>Writeup::HackmeTw | Star's Note</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-142199198-1"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-142199198-1');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="Star's Note" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切換導航欄">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Star's Note</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">星筆記</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首頁</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>關於</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分類</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>歸檔</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-TW">
+    <link itemprop="mainEntityOfPage" href="https://twinklestar03.com/InfoSec/Writeup_201906_HackmeTW/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar_sena.png">
+      <meta itemprop="name" content="TwinkleStar03">
+      <meta itemprop="description" content="ヾ(≧▽≦*)o Pwning my world<br>InfoSec // CTFer // Robotics<br>">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Star's Note">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Writeup::HackmeTw
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">發表於</span>
+
+              <time title="創建時間：2019-06-24 00:00:00" itemprop="dateCreated datePublished" datetime="2019-06-24T00:00:00+08:00">2019-06-24</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新於</span>
+                <time title="修改時間：2021-01-19 00:31:26" itemprop="dateModified" datetime="2021-01-19T00:31:26+08:00">2021-01-19</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分類於</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/InfoSec/" itemprop="url" rel="index"><span itemprop="name">InfoSec</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>為了練習CTF相關知識，所以到了這個網站上來玩，會慢慢的更新解題思路讓自己有點回饋~</p>
+<a id="more"></a>
+<p><a target="_blank" rel="noopener" href="https://hackme.inndy.tw/">網站在這邊&gt;~&lt;</a></p>
+<p>未來一直更新下去的話文章會很長很長，如果想要針對某一題或是類別的話電腦板網站左側有文章目錄可以按!</p>
+<hr>
+<h1 id="Misc"><a href="#Misc" class="headerlink" title="Misc"></a>Misc</h1><hr>
+<h2 id="flag"><a href="#flag" class="headerlink" title="flag"></a>flag</h2><blockquote>
+<p>All flags are in this format: FLAG{XXXXXXXXX}</p>
+</blockquote>
+<p>如題目敘述所示XDD</p>
+<hr>
+<h2 id="corgi-can-fly"><a href="#corgi-can-fly" class="headerlink" title="corgi can fly"></a>corgi can fly</h2><blockquote>
+<p>Corgi is cute, right?</p>
+</blockquote>
+<p>不知道該做甚麼的時候...<code>hexdump -C</code>!!</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">000cb150  61 6e 20 46 6c 79 dc 8d  04 1e 00 00 00 23 74 45  |an Fly.......#tE|</span><br><span class="line">000cb160  58 74 41 72 74 69 73 74  00 52 47 6c 6b 49 48 6c  |XtArtist.RGlkIHl|</span><br><span class="line">000cb170  76 64 53 42 30 63 6d 6c  6c 5a 43 42 4d 55 30 49  |vdSB0cmllZCBMU0I|</span><br><span class="line">000cb180  2f 43 67 3d 3d d1 5a 87  ea 00 00 00 00 49 45 4e  |&#x2F;Cg&#x3D;&#x3D;.Z......IEN|</span><br><span class="line">000cb190  44 ae 42 60 82                                    |D.B&#96;.|</span><br></pre></td></tr></table></figure>
+<p>在結尾有看到base64編碼過的編碼，特徵應該就是那兩個<code>==</code>，拿去base64 decode一下吧~<br><code>RGlkIHlvdSB0cmllZCBMU0ICg==</code> =&gt; <code>Did you tried LSB</code><br>不知道甚麼是LSB，先Google一下吧，查到了LSB是一種可以在圖片中隱寫的技巧，這時候就來找工具吧!</p>
+<p>這邊使用了<strong>stegsolve</strong>，一種圖片解碼器吧(?。 總之點開來load圖片進去然後gui點一點就會得到一個QRcode，掃一下答案就出來了!!</p>
+<hr>
+<h2 id="television"><a href="#television" class="headerlink" title="television"></a>television</h2><blockquote>
+<p>Looks like my television was broken</p>
+</blockquote>
+<p>這一題一開始會拿到一個<code>.bmp</code>的檔案，所以我就敲了<code>bmp file encryption</code>進去了google，得到了一個可能的答案: CBC Encrypted，因為被這種加密過後的bmp圖片跟題目給出來的長的差不多，結果好像不是….</p>
+<p>所以我用了<code>strings</code>觀察一下檔案….</p>
+<p>Flag直接就在裡面了XDD</p>
+<hr>
+<h2 id="meow"><a href="#meow" class="headerlink" title="meow"></a>meow</h2><blockquote>
+<p>Pusheen is cute!</p>
+</blockquote>
+<p>這次拿到了一個<code>.png</code>檔案，<code>binwalk</code>走起看看裡面藏了甚麼</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">binwalk meow.png</span><br><span class="line"></span><br><span class="line">DECIMAL       HEXADECIMAL     DESCRIPTION</span><br><span class="line">--------------------------------------------------------------------------------</span><br><span class="line">0             0x0             PNG image, 296 x 279, 8-bit&#x2F;color RGBA, non-interlaced</span><br><span class="line">41            0x29            Zlib compressed data, compressed</span><br><span class="line">48543         0xBD9F          Zip archive data, at least v1.0 to extract, name: meow&#x2F;</span><br><span class="line">48606         0xBDDE          Zip archive data, encrypted at least v2.0 to extract, compressed size: 51, uncompressed size: 47, name: meow&#x2F;flag</span><br><span class="line">48740         0xBE64          Zip archive data, at least v1.0 to extract, name: meow&#x2F;t39.1997-6&#x2F;</span><br><span class="line">48814         0xBEAE          Zip archive data, at least v1.0 to extract, name: meow&#x2F;t39.1997-6&#x2F;p296x100&#x2F;</span><br><span class="line">48897         0xBF01          Zip archive data, encrypted at least v2.0 to extract, compressed size: 48404, uncompressed size: 48543, name: meow&#x2F;t39.1997-6&#x2F;p296x100&#x2F;10173502_279586372215628_1950740854_n.png</span><br><span class="line">97912         0x17E78         End of Zip archive, footer length: 22</span><br></pre></td></tr></table></figure>
+<p>恩…看起來有.zip藏在裡面呢w 怎麼把它挖出來呢，使用<code>foremost</code>一個檔案還原工具!<br>之後會產出一個output資料夾，裡面有剛剛的<code>00000094.zip</code>還額外拿到一個<code>00000000.png</code>，</p>
+<p>總之先<code>unzip 00000094.zip</code>....</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Archive:  00000094.zip</span><br><span class="line">[00000094.zip] meow&#x2F;flag password:</span><br></pre></td></tr></table></figure>
+<p>看起來跟我要密碼，<del>我去哪裡生出來XDD</del><br>先分析看看這個拆出來的<code>.zip</code>吧，<code>unzip -v</code>走起!!(<strong>unzip -v: list verbosely/show version info</strong>)</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">unzip -v 00000094.zip</span><br><span class="line">Archive:  00000094.zip</span><br><span class="line"> Length   Method    Size  Cmpr    Date    Time   CRC-32   Name</span><br><span class="line">--------  ------  ------- ---- ---------- ----- --------  ----</span><br><span class="line">       0  Stored        0   0% 2016-06-11 17:22 00000000  meow&#x2F;</span><br><span class="line">      47  Defl:N       39  17% 2016-06-11 17:22 3046cea4  meow&#x2F;flag</span><br><span class="line">       0  Stored        0   0% 2016-06-11 17:20 00000000  meow&#x2F;t39.1997-6&#x2F;</span><br><span class="line">       0  Stored        0   0% 2016-06-11 17:21 00000000  meow&#x2F;t39.1997-6&#x2F;p296x100&#x2F;</span><br><span class="line">   48543  Defl:N    48392   0% 2014-05-14 06:59 cdad52bd  meow&#x2F;t39.1997-6&#x2F;p296x100&#x2F;10173502_279586372215628_1950740854_n.png</span><br><span class="line">--------          -------  ---                            -------</span><br><span class="line">   48590            48431   0%                            5 files</span><br></pre></td></tr></table></figure>
+<p>這裡頭也有一個.png耶，他的CRC32: cdad52bd，把剛剛招喚出來的<code>00000000.png</code>比較CRC32看看….<strong>一致耶!</strong></p>
+<p>這樣的話這個 <strong>zip存在著明文攻擊(known plain text attack)</strong> 的! <strong><code>pkcrack</code>走起!!</strong><br>如果要執行這個攻擊方式的話要<strong>把已知的部分製作成zip file</strong>，再使用pkcrack工具(之後來研究原理再做個文章介紹)。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">zip plain.zip 00000000.png&#96;</span><br><span class="line">pkcrack -C 00000094.zip  -c meow&#x2F;t39.1997-6&#x2F;p296x100&#x2F;10173502_279586372215628_1950740854_n.png -P plain.zip  -p ..&#x2F;png&#x2F;00000000.png -d resu</span><br><span class="line">lt.zip -a</span><br><span class="line">unzip result.zip</span><br><span class="line">cat meow&#x2F;flag</span><br></pre></td></tr></table></figure>
+<p>這個花好多心力再搞懂zip跟一些工具，花了不少時間但是收穫多多!d(`･∀･)b</p>
+<hr>
+<h2 id="where-is-flag"><a href="#where-is-flag" class="headerlink" title="where is flag"></a>where is flag</h2><blockquote>
+<p>Do you know regular expression? </p>
+</blockquote>
+<p>TBD</p>
+<hr>
+<h1 id="Web"><a href="#Web" class="headerlink" title="Web"></a>Web</h1><hr>
+<h2 id="hide-and-seek"><a href="#hide-and-seek" class="headerlink" title="hide and seek"></a>hide and seek</h2><blockquote>
+<p>Can you see me? I’m so close to you but you can’t see me.</p>
+</blockquote>
+<p>對著Hackme.tw的首頁<code>Ctrl + U</code> &amp; <code>Ctrl + F</code>輸入FLAG，蹦!</p>
+<hr>
+<h2 id="guestbook"><a href="#guestbook" class="headerlink" title="guestbook"></a>guestbook</h2><blockquote>
+<p>This guestbook sucks. sqlmap is your friend.</p>
+</blockquote>
+<p>TBD</p>
+<hr>
+<h2 id="LFI"><a href="#LFI" class="headerlink" title="LFI"></a>LFI</h2><blockquote>
+<p>What this admin’s password? That is not important at all, just get the flag.<br>Tips: LFI, php://filter</p>
+</blockquote>
+<p>這題我發現有兩條路可以走，都可以拿到Flag，<strong>兩條路的攻擊方法都是Local File Inclusion Attack</strong>只是一個是打<code>/login</code>一個是猜的，開始囉(ゝ∀･)</p>
+<p>我們一開始可以看到網址<code>https://hackme.inndy.tw/lfi/?page=pages/index</code>使用了<code>?page</code>來取得資源，但是如果直接改掉網址轉向到其他地方會出現一個訊息</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">H@cK3r F0UnD</span><br></pre></td></tr></table></figure>
+<p>這很明顯不是我們要的，在題目的提示還給出了<code>php://filter</code>這個提示，應該是希望我們使用這個東西來bypass掉網址保護，把內容用base64 encode之後輸出<code>php://filter/read=convert.base64-encode/resource=</code></p>
+<p>把網址改成<code>https://hackme.inndy.tw/lfi/?page=php://filter/read=convert.base64-encode/resource=pages/flag</code>來存取網頁原始碼(flag.php是猜的)</p>
+<p>得到一串Base64，找個工具decode得出</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Can you read the flag&lt;?php require(&#39;config.php&#39;); ?&gt;?</span><br></pre></td></tr></table></figure>
+<p>還真的有東西，那就讀他的<code>config.php</code>吧! Flag就在裡面</p>
+<hr>
+<h2 id="homepage"><a href="#homepage" class="headerlink" title="homepage"></a>homepage</h2><blockquote>
+<p>Where is the flag? Did you check the code?</p>
+</blockquote>
+<p>在首頁使用<code>F12</code>然後進到console tab，有個QRCodeXD</p>
+<hr>
+<h2 id="ping"><a href="#ping" class="headerlink" title="ping"></a>ping</h2><blockquote>
+<p>Can you ping 127.0.0.1?</p>
+</blockquote>
+<p>一點進去就會出現一個網頁有textbox跟button，而且一開始就把php source code吐出來了。</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line">&lt;!DOCTYPE html&gt;</span><br><span class="line">&lt;html lang=<span class="string">&quot;en&quot;</span>&gt;</span><br><span class="line">&lt;head&gt;</span><br><span class="line">    &lt;meta charset=<span class="string">&quot;UTF-8&quot;</span>&gt;</span><br><span class="line">    &lt;title&gt;Ping&lt;/title&gt;</span><br><span class="line">&lt;/head&gt;</span><br><span class="line">&lt;body&gt;</span><br><span class="line">    &lt;form action=<span class="string">&quot;.&quot;</span> method=<span class="string">&quot;GET&quot;</span>&gt;</span><br><span class="line">        IP: &lt;input type=<span class="string">&quot;text&quot;</span> name=<span class="string">&quot;ip&quot;</span>&gt; &lt;input type=<span class="string">&quot;submit&quot;</span> value=<span class="string">&quot;Ping&quot;</span>&gt;</span><br><span class="line">    &lt;/form&gt;</span><br><span class="line">    &lt;pre&gt;<span class="meta">&lt;?php</span></span><br><span class="line">        <span class="variable">$blacklist</span> = [</span><br><span class="line">            <span class="string">&#x27;flag&#x27;</span>, <span class="string">&#x27;cat&#x27;</span>, <span class="string">&#x27;nc&#x27;</span>, <span class="string">&#x27;sh&#x27;</span>, <span class="string">&#x27;cp&#x27;</span>, <span class="string">&#x27;touch&#x27;</span>, <span class="string">&#x27;mv&#x27;</span>, <span class="string">&#x27;rm&#x27;</span>, <span class="string">&#x27;ps&#x27;</span>, <span class="string">&#x27;top&#x27;</span>, <span class="string">&#x27;sleep&#x27;</span>, <span class="string">&#x27;sed&#x27;</span>,</span><br><span class="line">            <span class="string">&#x27;apt&#x27;</span>, <span class="string">&#x27;yum&#x27;</span>, <span class="string">&#x27;curl&#x27;</span>, <span class="string">&#x27;wget&#x27;</span>, <span class="string">&#x27;perl&#x27;</span>, <span class="string">&#x27;python&#x27;</span>, <span class="string">&#x27;zip&#x27;</span>, <span class="string">&#x27;tar&#x27;</span>, <span class="string">&#x27;php&#x27;</span>, <span class="string">&#x27;ruby&#x27;</span>, <span class="string">&#x27;kill&#x27;</span>,</span><br><span class="line">            <span class="string">&#x27;passwd&#x27;</span>, <span class="string">&#x27;shadow&#x27;</span>, <span class="string">&#x27;root&#x27;</span>,</span><br><span class="line">            <span class="string">&#x27;z&#x27;</span>,</span><br><span class="line">            <span class="string">&#x27;dir&#x27;</span>, <span class="string">&#x27;dd&#x27;</span>, <span class="string">&#x27;df&#x27;</span>, <span class="string">&#x27;du&#x27;</span>, <span class="string">&#x27;free&#x27;</span>, <span class="string">&#x27;tempfile&#x27;</span>, <span class="string">&#x27;touch&#x27;</span>, <span class="string">&#x27;tee&#x27;</span>, <span class="string">&#x27;sha&#x27;</span>, <span class="string">&#x27;x64&#x27;</span>, <span class="string">&#x27;g&#x27;</span>,</span><br><span class="line">            <span class="string">&#x27;xargs&#x27;</span>, <span class="string">&#x27;PATH&#x27;</span>,</span><br><span class="line">            <span class="string">&#x27;$0&#x27;</span>, <span class="string">&#x27;proc&#x27;</span>,</span><br><span class="line">            <span class="string">&#x27;/&#x27;</span>, <span class="string">&#x27;&amp;&#x27;</span>, <span class="string">&#x27;|&#x27;</span>, <span class="string">&#x27;&gt;&#x27;</span>, <span class="string">&#x27;&lt;&#x27;</span>, <span class="string">&#x27;;&#x27;</span>, <span class="string">&#x27;&quot;&#x27;</span>, <span class="string">&#x27;\&#x27;&#x27;</span>, <span class="string">&#x27;\\&#x27;</span>, <span class="string">&quot;\n&quot;</span></span><br><span class="line">        ];</span><br><span class="line"></span><br><span class="line">        set_time_limit(<span class="number">2</span>);</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">function</span> <span class="title">ping</span>(<span class="params"><span class="variable">$ip</span></span>) </span>&#123;</span><br><span class="line">            <span class="keyword">global</span> <span class="variable">$blacklist</span>;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span>(strlen(<span class="variable">$ip</span>) &gt; <span class="number">15</span>) &#123;</span><br><span class="line">                <span class="keyword">return</span> <span class="string">&#x27;IP toooooo longgggggggggg&#x27;</span>;</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="keyword">foreach</span>(<span class="variable">$blacklist</span> <span class="keyword">as</span> <span class="variable">$keyword</span>) &#123;</span><br><span class="line">                    <span class="keyword">if</span>(strstr(<span class="variable">$ip</span>, <span class="variable">$keyword</span>)) &#123;</span><br><span class="line">                        <span class="keyword">return</span> <span class="string">&quot;<span class="subst">&#123;$keyword&#125;</span> not allowed&quot;</span>;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="variable">$ret</span> = [];</span><br><span class="line">                exec(<span class="string">&quot;ping -c 1 \&quot;<span class="subst">&#123;$ip&#125;</span>\&quot; 2&gt;&amp;1&quot;</span>, <span class="variable">$ret</span>);</span><br><span class="line">                <span class="keyword">return</span> implode(<span class="string">&quot;\n&quot;</span>, array_slice(<span class="variable">$ret</span>, <span class="number">0</span>, <span class="number">10</span>));</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span>(!<span class="keyword">empty</span>(<span class="variable">$_GET</span>[<span class="string">&#x27;ip&#x27;</span>]))</span><br><span class="line">            <span class="keyword">echo</span> htmlentities(ping(<span class="variable">$_GET</span>[<span class="string">&#x27;ip&#x27;</span>]));</span><br><span class="line">        <span class="keyword">else</span></span><br><span class="line">            highlight_file(<span class="keyword">__FILE__</span>);</span><br><span class="line">    <span class="meta">?&gt;</span>&lt;/pre&gt;</span><br><span class="line">&lt;/body&gt;</span><br><span class="line">&lt;/html&gt;</span><br></pre></td></tr></table></figure>
+<p>我們可以觀察到前面有個blacklist，看起來是用來避免textbox出現這些東西，繼續往下就會看到有個<code>exec()</code>的function，我們應該可以透過command injection來拿flag</p>
+<p>但是不能直接寫指令上去，要先把之前的ping隔開，但是大多數的符號都被禁止了，好佳在**”`(反斜線)”**沒有被禁止，而且<code>ls</code>也沒有被禁止，我們先試試看<code>反斜線ls反斜線</code>吧!</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ping: flag.php</span><br><span class="line">index.php: Name or service not known</span><br></pre></td></tr></table></figure>
+<p>看起來有個<code>flag.php</code>的檔案，但是我們不能使用<code>cat</code>也不能寫腳本讓他跑，但其實還有<code>sort</code>可以用，試試看<code>sort flag.php</code>!</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">flag not allowed</span><br></pre></td></tr></table></figure>
+<p>對耶，flag也在blacklist裡面，我們還有一種工具，叫做wildcard<code>?</code>，那把輸入改成<code>sort ????????</code>就會吐flag出來了!</p>
+<p>看起來blacklist沒有禁止<code>grep</code>之後再來試試看能不能用grep吐flag。</p>
+<hr>
+<h2 id="scoreboard"><a href="#scoreboard" class="headerlink" title="scoreboard"></a>scoreboard</h2><blockquote>
+<p>DO NOT ATTACK or SCAN scoreboard, you don’t need to do that.</p>
+</blockquote>
+<p>Flag在response header裡面。</p>
+
+    </div>
+
+    
+    
+    
+        
+
+  <div class="followme">
+    <p>喜歡這些內容嗎? 歡迎訂閱我的部落格!</p>
+
+    <div class="social-list">
+
+        <div class="social-item">
+          <a target="_blank" class="social-link" href="/atom.xml">
+            <span class="icon">
+              <i class="fa fa-rss"></i>
+            </span>
+
+            <span class="label">RSS</span>
+          </a>
+        </div>
+    </div>
+  </div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/CTF/" rel="tag"># CTF</a>
+              <a href="/tags/Hackme-tw/" rel="tag"># Hackme.tw</a>
+              <a href="/tags/Writeup/" rel="tag"># Writeup</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/Algorithm/Writeup_201906_APCS/" rel="prev" title="201906_APCS_解題過程">
+      <i class="fa fa-chevron-left"></i> 201906_APCS_解題過程
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/InfoSec/Writeup_201906_AIS3PreExam17_PwnEnd/" rel="next" title="Writeup::AIS3_2017_PreExam_Pwn-End">
+      Writeup::AIS3_2017_PreExam_Pwn-End <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目錄
+        </li>
+        <li class="sidebar-nav-overview">
+          本站概要
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Misc"><span class="nav-number">1.</span> <span class="nav-text">Misc</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#flag"><span class="nav-number">1.1.</span> <span class="nav-text">flag</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#corgi-can-fly"><span class="nav-number">1.2.</span> <span class="nav-text">corgi can fly</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#television"><span class="nav-number">1.3.</span> <span class="nav-text">television</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#meow"><span class="nav-number">1.4.</span> <span class="nav-text">meow</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#where-is-flag"><span class="nav-number">1.5.</span> <span class="nav-text">where is flag</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Web"><span class="nav-number">2.</span> <span class="nav-text">Web</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#hide-and-seek"><span class="nav-number">2.1.</span> <span class="nav-text">hide and seek</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#guestbook"><span class="nav-number">2.2.</span> <span class="nav-text">guestbook</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#LFI"><span class="nav-number">2.3.</span> <span class="nav-text">LFI</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#homepage"><span class="nav-number">2.4.</span> <span class="nav-text">homepage</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ping"><span class="nav-number">2.5.</span> <span class="nav-text">ping</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#scoreboard"><span class="nav-number">2.6.</span> <span class="nav-text">scoreboard</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TwinkleStar03"
+      src="/images/avatar_sena.png">
+  <p class="site-author-name" itemprop="name">TwinkleStar03</p>
+  <div class="site-description" itemprop="description">ヾ(≧▽≦*)o Pwning my world<br>InfoSec // CTFer // Robotics<br></div>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:star@twinklestar03.com" title="E-mail → mailto:star@twinklestar03.com"><i class="fa fa-envelope fa-fw"></i>E-mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.facebook.com/star12465/" title="Facebook → https:&#x2F;&#x2F;www.facebook.com&#x2F;star12465&#x2F;" rel="noopener" target="_blank"><i class="fab fa-facebook fa-fw"></i>Facebook</a>
+      </span>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TwinkleStar03</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

