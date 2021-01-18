@@ -36,7 +36,7 @@
 <meta property="og:image" content="https://twinklestar03.com/images/TeamT5SecurityCamp/behavior_spawn_batch.png">
 <meta property="og:image" content="https://twinklestar03.com/images/TeamT5SecurityCamp/behavior_dns_request.png">
 <meta property="article:published_time" content="2021-01-09T16:00:00.000Z">
-<meta property="article:modified_time" content="2021-01-18T16:44:26.195Z">
+<meta property="article:modified_time" content="2021-01-18T16:49:40.130Z">
 <meta property="article:author" content="TwinkleStar03">
 <meta property="article:tag" content="Writeup">
 <meta property="article:tag" content="TeamT5 SecurityCamp">
@@ -210,7 +210,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新於</span>
-                <time title="修改時間：2021-01-19 00:44:26" itemprop="dateModified" datetime="2021-01-19T00:44:26+08:00">2021-01-19</time>
+                <time title="修改時間：2021-01-19 00:49:40" itemprop="dateModified" datetime="2021-01-19T00:49:40+08:00">2021-01-19</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -252,7 +252,7 @@
 <p>後續檢查發現，少掉的function大多都是IDA沒有解析出來，但他還是存在於檔案中的<br>是一些長的像jump table結構的東西。<br><img src="/images/TeamT5SecurityCamp/unpacking_missing_function_2.png"><br>所以我後續分析還是用UPX脫出來的為準。</p>
 </blockquote>
 <h2 id="行為分析"><a href="#行為分析" class="headerlink" title="行為分析"></a>行為分析</h2><p>我這邊透過Process Montior與Wireshark來記錄，在透過rundll32去跑這隻DLL的RegisterServer函數。</p>
-<h3 id="生成常駐檔案"><a href="#生成常駐檔案" class="headerlink" title="生成常駐檔案"></a>生成常駐檔案</h3><p>樣本會先CreateFile，<code>C:\ProgramData\Software\Microsoft\Windows\Defender\AutoUpdate.dll</code>，之後使用regsvr32去註冊這隻DLL成為DLL Server。</p>
+<h3 id="生成常駐檔案"><a href="#生成常駐檔案" class="headerlink" title="生成常駐檔案"></a>生成常駐檔案</h3><p>樣本會先生成一隻DLL，並放在:<br><code>C:\ProgramData\Software\Microsoft\Windows\Defender\AutoUpdate.dll</code><br>之後使用regsvr32去註冊這隻DLL成為DLL Server。</p>
 <p>此外我在尋找AutoRun的時候找到了這個，也能證明這一個DLL是生出來的檔案並常駐於系統。</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">key: HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\RunOnce</span><br><span class="line">name: WindowsDefender</span><br><span class="line">operation: write</span><br><span class="line">typeValue: REG_SZ</span><br><span class="line">value: regsvr32.exe &#x2F;s &quot;C:\ProgramData\Software\Microsoft\Windows\Defender\AutoUpdate.dll&quot;</span><br></pre></td></tr></table></figure>
 <p>而這個AutoUpdate.dll一樣有加殼，也是UPX的殼，然後run起來行為差不多(#</p>

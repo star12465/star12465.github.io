@@ -6,7 +6,7 @@
   <link href="https://twinklestar03.com/atom.xml" rel="self"/>
   
   <link href="https://twinklestar03.com/"/>
-  <updated>2021-01-18T16:44:26.195Z</updated>
+  <updated>2021-01-18T16:49:40.130Z</updated>
   <id>https://twinklestar03.com/</id>
   
   <author>
@@ -21,9 +21,9 @@
     <link href="https://twinklestar03.com/InfoSec/Writeup_202101_TeamT5SecurityCamp/"/>
     <id>https://twinklestar03.com/InfoSec/Writeup_202101_TeamT5SecurityCamp/</id>
     <published>2021-01-09T16:00:00.000Z</published>
-    <updated>2021-01-18T16:44:26.195Z</updated>
+    <updated>2021-01-18T16:49:40.130Z</updated>
     
-    <content type="html"><![CDATA[<p>新的一年，自己的網誌也該來更新一下了!<br>除了把Hexo升級跟把網誌變成Dark mode外，怎麼能夠少了新文章呢?</p><p>2021是我進入資安領域的第二年，然後發現了TeamT5辦了一個SecurityCamp。<br>想要學習新東西所以報名參加，發現參加前還要先做樣本分析…真的有夠硬核XD</p><p>這篇文章就是我在分析過程的二三事。</p><a id="more"></a><hr><h2 id="Recon"><a href="#Recon" class="headerlink" title="Recon"></a>Recon</h2><p>把樣本塞進IDA後發現這隻檔案有被加殼，加上的是UPX的殼。</p><p>丟進PEStudio可以知道這是一隻DLL檔案，等等後續可能會用到Loader來協助自己分析。<br><img src="/images/TeamT5SecurityCamp/recon_pestudio.png"></p><h2 id="手動脫殼的二三事"><a href="#手動脫殼的二三事" class="headerlink" title="手動脫殼的二三事"></a>手動脫殼的二三事</h2><p>因為沒甚麼接觸過樣本分析，所以我想要從手動脫殼來開始練習，所以就不使用 <code>upx -d</code> 了。</p><p>這邊用的是x32dbg，用rundll32載入DLL再踩上DLL自己的EP。<br><img src="/images/TeamT5SecurityCamp/unpacking_rundll32.png"></p><p>運用Unpack時會改動ESP的特性，在對ESP操作的instruction下斷點。<br>Continue 後我發現了這個地方。<br><img src="/images/TeamT5SecurityCamp/unpacking_cleaning_stack.png"></p><p>不斷的往Stack中放 <code>0</code>，之後接著跳去一個很遠的地方，我認為那邊就是這隻DLL的OEP了。</p><p>前往目標位置然後用Scylla把Unpacked的DLL dump出來，然後用Scylla來Fix IAT 跟 Import table，之後就可以來繼續分析了。</p><p>只不過抓Import Table似乎出了點問題…<br><img src="/images/TeamT5SecurityCamp/unpacking_import_table.png"></p><p>我後續比對自己手脫跟 <code>upx -d</code> 脫出來的檔案，發現會有function數量上的差異。<br>而且消失的function不在連續記憶體上，所以排除了dump整個爛掉的可能，猜測就是這個環節出了問題。<br><img src="/images/TeamT5SecurityCamp/unpacking_missing_function.png"></p><blockquote><p>後續檢查發現，少掉的function大多都是IDA沒有解析出來，但他還是存在於檔案中的<br>是一些長的像jump table結構的東西。<br><img src="/images/TeamT5SecurityCamp/unpacking_missing_function_2.png"><br>所以我後續分析還是用UPX脫出來的為準。</p></blockquote><h2 id="行為分析"><a href="#行為分析" class="headerlink" title="行為分析"></a>行為分析</h2><p>我這邊透過Process Montior與Wireshark來記錄，在透過rundll32去跑這隻DLL的RegisterServer函數。</p><h3 id="生成常駐檔案"><a href="#生成常駐檔案" class="headerlink" title="生成常駐檔案"></a>生成常駐檔案</h3><p>樣本會先CreateFile，<code>C:\ProgramData\Software\Microsoft\Windows\Defender\AutoUpdate.dll</code>，之後使用regsvr32去註冊這隻DLL成為DLL Server。</p><p>此外我在尋找AutoRun的時候找到了這個，也能證明這一個DLL是生出來的檔案並常駐於系統。</p><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">key: HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\RunOnce</span><br><span class="line">name: WindowsDefender</span><br><span class="line">operation: write</span><br><span class="line">typeValue: REG_SZ</span><br><span class="line">value: regsvr32.exe &#x2F;s &quot;C:\ProgramData\Software\Microsoft\Windows\Defender\AutoUpdate.dll&quot;</span><br></pre></td></tr></table></figure><p>而這個AutoUpdate.dll一樣有加殼，也是UPX的殼，然後run起來行為差不多(#</p><h3 id="移除初始檔案"><a href="#移除初始檔案" class="headerlink" title="移除初始檔案"></a>移除初始檔案</h3><p>從ProcessMonitor中，可以看到樣本會先生成一個Patch檔，並放在 <code>C:\ProgramData\temp\[A-Za-z0-9]&#123;4&#125;.tmp.bat</code>。之後會呼叫cmd去執行這個Batch file來達成移除初始檔案。</p><p><img src="/images/TeamT5SecurityCamp/behavior_spawn_batch.png"></p><p>Batch File:</p><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">:repeat</span><br><span class="line">    del &quot;C:\Users\tim12\Desktop\TeamT5_Analysis\Unpacking\b6eeed4fd8eb48126ffb216fd392ae74.dll&quot;</span><br><span class="line">    if exist &quot;C:\Users\tim12\Desktop\TeamT5_Analysis\Unpacking\b6eeed4fd8eb48126ffb216fd392ae74.dll&quot; goto repeat</span><br><span class="line">    del &quot;%~f0&quot;</span><br></pre></td></tr></table></figure><h3 id="DNS-Request"><a href="#DNS-Request" class="headerlink" title="DNS Request"></a>DNS Request</h3><p>樣本跑起來之後，我在Wireshark錄到了一個DNS Request，看起來是要解析C2 Server的位置。</p><p>不過這邊卻長得像一個忘記改掉的Placeholder，蠻有趣的w</p><p><img src="/images/TeamT5SecurityCamp/behavior_dns_request.png"></p>]]></content>
+    <content type="html"><![CDATA[<p>新的一年，自己的網誌也該來更新一下了!<br>除了把Hexo升級跟把網誌變成Dark mode外，怎麼能夠少了新文章呢?</p><p>2021是我進入資安領域的第二年，然後發現了TeamT5辦了一個SecurityCamp。<br>想要學習新東西所以報名參加，發現參加前還要先做樣本分析…真的有夠硬核XD</p><p>這篇文章就是我在分析過程的二三事。</p><a id="more"></a><hr><h2 id="Recon"><a href="#Recon" class="headerlink" title="Recon"></a>Recon</h2><p>把樣本塞進IDA後發現這隻檔案有被加殼，加上的是UPX的殼。</p><p>丟進PEStudio可以知道這是一隻DLL檔案，等等後續可能會用到Loader來協助自己分析。<br><img src="/images/TeamT5SecurityCamp/recon_pestudio.png"></p><h2 id="手動脫殼的二三事"><a href="#手動脫殼的二三事" class="headerlink" title="手動脫殼的二三事"></a>手動脫殼的二三事</h2><p>因為沒甚麼接觸過樣本分析，所以我想要從手動脫殼來開始練習，所以就不使用 <code>upx -d</code> 了。</p><p>這邊用的是x32dbg，用rundll32載入DLL再踩上DLL自己的EP。<br><img src="/images/TeamT5SecurityCamp/unpacking_rundll32.png"></p><p>運用Unpack時會改動ESP的特性，在對ESP操作的instruction下斷點。<br>Continue 後我發現了這個地方。<br><img src="/images/TeamT5SecurityCamp/unpacking_cleaning_stack.png"></p><p>不斷的往Stack中放 <code>0</code>，之後接著跳去一個很遠的地方，我認為那邊就是這隻DLL的OEP了。</p><p>前往目標位置然後用Scylla把Unpacked的DLL dump出來，然後用Scylla來Fix IAT 跟 Import table，之後就可以來繼續分析了。</p><p>只不過抓Import Table似乎出了點問題…<br><img src="/images/TeamT5SecurityCamp/unpacking_import_table.png"></p><p>我後續比對自己手脫跟 <code>upx -d</code> 脫出來的檔案，發現會有function數量上的差異。<br>而且消失的function不在連續記憶體上，所以排除了dump整個爛掉的可能，猜測就是這個環節出了問題。<br><img src="/images/TeamT5SecurityCamp/unpacking_missing_function.png"></p><blockquote><p>後續檢查發現，少掉的function大多都是IDA沒有解析出來，但他還是存在於檔案中的<br>是一些長的像jump table結構的東西。<br><img src="/images/TeamT5SecurityCamp/unpacking_missing_function_2.png"><br>所以我後續分析還是用UPX脫出來的為準。</p></blockquote><h2 id="行為分析"><a href="#行為分析" class="headerlink" title="行為分析"></a>行為分析</h2><p>我這邊透過Process Montior與Wireshark來記錄，在透過rundll32去跑這隻DLL的RegisterServer函數。</p><h3 id="生成常駐檔案"><a href="#生成常駐檔案" class="headerlink" title="生成常駐檔案"></a>生成常駐檔案</h3><p>樣本會先生成一隻DLL，並放在:<br><code>C:\ProgramData\Software\Microsoft\Windows\Defender\AutoUpdate.dll</code><br>之後使用regsvr32去註冊這隻DLL成為DLL Server。</p><p>此外我在尋找AutoRun的時候找到了這個，也能證明這一個DLL是生出來的檔案並常駐於系統。</p><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">key: HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\RunOnce</span><br><span class="line">name: WindowsDefender</span><br><span class="line">operation: write</span><br><span class="line">typeValue: REG_SZ</span><br><span class="line">value: regsvr32.exe &#x2F;s &quot;C:\ProgramData\Software\Microsoft\Windows\Defender\AutoUpdate.dll&quot;</span><br></pre></td></tr></table></figure><p>而這個AutoUpdate.dll一樣有加殼，也是UPX的殼，然後run起來行為差不多(#</p><h3 id="移除初始檔案"><a href="#移除初始檔案" class="headerlink" title="移除初始檔案"></a>移除初始檔案</h3><p>從ProcessMonitor中，可以看到樣本會先生成一個Patch檔，並放在 <code>C:\ProgramData\temp\[A-Za-z0-9]&#123;4&#125;.tmp.bat</code>。之後會呼叫cmd去執行這個Batch file來達成移除初始檔案。</p><p><img src="/images/TeamT5SecurityCamp/behavior_spawn_batch.png"></p><p>Batch File:</p><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">:repeat</span><br><span class="line">    del &quot;C:\Users\tim12\Desktop\TeamT5_Analysis\Unpacking\b6eeed4fd8eb48126ffb216fd392ae74.dll&quot;</span><br><span class="line">    if exist &quot;C:\Users\tim12\Desktop\TeamT5_Analysis\Unpacking\b6eeed4fd8eb48126ffb216fd392ae74.dll&quot; goto repeat</span><br><span class="line">    del &quot;%~f0&quot;</span><br></pre></td></tr></table></figure><h3 id="DNS-Request"><a href="#DNS-Request" class="headerlink" title="DNS Request"></a>DNS Request</h3><p>樣本跑起來之後，我在Wireshark錄到了一個DNS Request，看起來是要解析C2 Server的位置。</p><p>不過這邊卻長得像一個忘記改掉的Placeholder，蠻有趣的w</p><p><img src="/images/TeamT5SecurityCamp/behavior_dns_request.png"></p>]]></content>
     
     
     <summary type="html">&lt;p&gt;新的一年，自己的網誌也該來更新一下了!&lt;br&gt;除了把Hexo升級跟把網誌變成Dark mode外，怎麼能夠少了新文章呢?&lt;/p&gt;
@@ -138,9 +138,9 @@
     <category term="InfoSec" scheme="https://twinklestar03.com/categories/InfoSec/"/>
     
     
-    <category term="Writeup" scheme="https://twinklestar03.com/tags/Writeup/"/>
-    
     <category term="Pwn" scheme="https://twinklestar03.com/tags/Pwn/"/>
+    
+    <category term="Writeup" scheme="https://twinklestar03.com/tags/Writeup/"/>
     
     <category term="BamboofoxCTF" scheme="https://twinklestar03.com/tags/BamboofoxCTF/"/>
     
@@ -268,13 +268,13 @@
     <category term="InfoSec" scheme="https://twinklestar03.com/categories/InfoSec/"/>
     
     
-    <category term="Writeup" scheme="https://twinklestar03.com/tags/Writeup/"/>
-    
     <category term="AIS3PreExam" scheme="https://twinklestar03.com/tags/AIS3PreExam/"/>
     
     <category term="AIS3-2017" scheme="https://twinklestar03.com/tags/AIS3-2017/"/>
     
     <category term="Pwn" scheme="https://twinklestar03.com/tags/Pwn/"/>
+    
+    <category term="Writeup" scheme="https://twinklestar03.com/tags/Writeup/"/>
     
   </entry>
   
@@ -297,9 +297,9 @@
     
     <category term="CTF" scheme="https://twinklestar03.com/tags/CTF/"/>
     
-    <category term="Hackme.tw" scheme="https://twinklestar03.com/tags/Hackme-tw/"/>
-    
     <category term="Writeup" scheme="https://twinklestar03.com/tags/Writeup/"/>
+    
+    <category term="Hackme.tw" scheme="https://twinklestar03.com/tags/Hackme-tw/"/>
     
   </entry>
   
